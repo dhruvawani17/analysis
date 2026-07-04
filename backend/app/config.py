@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Literal
+import os
 
 
 class Settings(BaseSettings):
@@ -14,7 +15,7 @@ class Settings(BaseSettings):
 
     host: str = "0.0.0.0"
     port: int = 8000
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,https://*.vercel.app"
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -24,3 +25,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# For Vercel: create data dirs if they don't exist
+os.makedirs(settings.upload_dir, exist_ok=True)
