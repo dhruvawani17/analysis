@@ -12,6 +12,125 @@ from app.services.utils import get_id_columns
 warnings.filterwarnings("ignore")
 
 
+def detect_feature_engineering(df: pd.DataFrame, target: str) -> dict:
+    options = {"encode_categoricals": False, "extract_dates": False, "log_transform": False, "interactions": False}
+    reasons = []
+
+    cat_cols = [c for c in df.select_dtypes(include=["object", "category"]).columns if c != target]
+    encodable = [c for c in cat_cols if df[c].nunique() <= 20]
+    if encodable:
+        options["encode_categoricals"] = True
+        reasons.append(f"One-hot encode {len(encodable)} categorical columns ({', '.join(encodable[:3])}{'...' if len(encodable) > 3 else ''})")
+
+    str_cols = df.select_dtypes(include=["object"]).columns
+    date_like = 0
+    for col in str_cols:
+        if col == target:
+            continue
+        try:
+            parsed = pd.to_datetime(df[col], errors="coerce", infer_datetime_format=True)
+            if parsed.notna().sum() > len(df) * 0.5:
+                date_like += 1
+        except Exception:
+            pass
+    datetime_cols = df.select_dtypes(include=["datetime64[ns]"]).columns
+    total_dates = len(datetime_cols) + date_like
+    if total_dates > 0:
+        options["extract_dates"] = True
+        reasons.append(f"Extract date features from {total_dates} date column(s)")
+
+    num_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c != target]
+    skewed = [c for c in num_cols if df[c].min() >= 0 and df[c].skew() > 1]
+    if skewed:
+        options["log_transform"] = True
+        reasons.append(f"Log-transform {len(skewed)} skewed column(s) ({', '.join(skewed[:3])}{'...' if len(skewed) > 3 else ''})")
+
+    if len(num_cols) >= 3:
+        options["interactions"] = True
+        reasons.append(f"Create interaction features from top {min(5, len(num_cols))} numeric columns")
+
+    options["_reasons"] = reasons
+    return options
+
+
+def apply_feature_engineering(df: pd.DataFrame, options: dict | None = None, target: str | None = None) -> tuple[pd.DataFrame, dict]:
+    if not options:
+        return df, {}
+
+    if options == "auto" and target:
+        detected = detect_feature_engineering(df, target)
+        reasons = detected.pop("_reasons", [])
+        options = detected
+    elif isinstance(options, dict) and options.get("_reasons"):
+        reasons = options.pop("_reasons", [])
+    else:
+        reasons = []
+
+    df = df.copy()
+    applied = []
+
+    if options.get("encode_categoricals"):
+        cat_cols = [c for c in df.select_dtypes(include=["object", "category"]).columns if c != target]
+        encoded = 0
+        for col in cat_cols:
+            if df[col].nunique() <= 20:
+                dummies = pd.get_dummies(df[col], prefix=col, drop_first=True, dtype=int)
+                df = pd.concat([df, dummies], axis=1)
+                df.drop(columns=[col], inplace=True)
+                encoded += 1
+        if encoded:
+            applied.append(f"Encoded {encoded} categorical columns")
+
+    if options.get("extract_dates"):
+        date_cols = df.select_dtypes(include=["datetime64[ns]"]).columns
+        for col in date_cols:
+            df[f"{col}_year"] = df[col].dt.year
+            df[f"{col}_month"] = df[col].dt.month
+            df[f"{col}_day"] = df[col].dt.day
+            df[f"{col}_dayofweek"] = df[col].dt.dayofweek
+            df.drop(columns=[col], inplace=True)
+        str_cols = df.select_dtypes(include=["object"]).columns
+        for col in str_cols:
+            try:
+                parsed = pd.to_datetime(df[col], errors="coerce", infer_datetime_format=True)
+                if parsed.notna().sum() > len(df) * 0.5:
+                    df[f"{col}_year"] = parsed.dt.year
+                    df[f"{col}_month"] = parsed.dt.month
+                    df[f"{col}_day"] = parsed.dt.day
+                    df[f"{col}_dayofweek"] = parsed.dt.dayofweek
+                    df.drop(columns=[col], inplace=True)
+                    applied.append(f"Extracted date features from '{col}'")
+            except Exception:
+                pass
+
+    if options.get("log_transform"):
+        num_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c != target]
+        logged = 0
+        for col in num_cols:
+            if df[col].min() >= 0 and df[col].skew() > 1:
+                df[f"{col}_log"] = np.log1p(df[col])
+                logged += 1
+        if logged:
+            applied.append(f"Log-transformed {logged} skewed columns")
+
+    if options.get("interactions"):
+        num_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c != target]
+        if len(num_cols) >= 2:
+            variances = df[num_cols].var().sort_values(ascending=False)
+            top_cols = list(variances.index[:min(5, len(num_cols))])
+            pairs = 0
+            for i in range(len(top_cols)):
+                for j in range(i + 1, len(top_cols)):
+                    c1, c2 = top_cols[i], top_cols[j]
+                    df[f"{c1}_x_{c2}"] = df[c1] * df[c2]
+                    pairs += 1
+            if pairs:
+                applied.append(f"Created {pairs} interaction features")
+
+    fe_info = {"applied": applied, "reasons": reasons}
+    return df, fe_info
+
+
 def _get_models(problem_type: str, random_state: int = 42) -> dict:
     models: dict[str, Any] = {}
 
@@ -194,7 +313,7 @@ def generate_predictions(df: pd.DataFrame, target: str, problem_type: str, featu
     return preds
 
 
-async def train_and_evaluate(df: pd.DataFrame, target: str) -> dict[str, Any]:
+async def train_and_evaluate(df: pd.DataFrame, target: str, feature_engineering: dict | str | None = "auto") -> dict[str, Any]:
     id_cols = get_id_columns(df)
     problem_type = detect_problem_type(df, target)
 
@@ -202,6 +321,15 @@ async def train_and_evaluate(df: pd.DataFrame, target: str) -> dict[str, Any]:
         le = LabelEncoder()
         df = df.copy()
         df[target] = le.fit_transform(df[target].astype(str))
+
+    if feature_engineering is None:
+        fe_opts = None
+    elif feature_engineering == "auto":
+        fe_opts = "auto"
+    else:
+        fe_opts = feature_engineering
+
+    df, fe_info = apply_feature_engineering(df, fe_opts, target=target)
 
     feature_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c != target and c not in id_cols]
     if not feature_cols:
@@ -278,4 +406,5 @@ async def train_and_evaluate(df: pd.DataFrame, target: str) -> dict[str, Any]:
         "num_samples": len(df),
         "insights": insights,
         "predictions": predictions,
+        "feature_engineering": fe_info,
     }

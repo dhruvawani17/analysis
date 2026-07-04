@@ -18,10 +18,12 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 
 export default function HomePage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
@@ -50,7 +52,8 @@ export default function HomePage() {
         setUploadProgress(`Uploading ${files[0].name}...`);
         setUploading(true);
         try {
-          await uploadMutation.mutateAsync(files[0]);
+          const result = await uploadMutation.mutateAsync(files[0]);
+          router.push(`/datasets/${result.id}`);
         } finally {
           setUploading(false);
         }

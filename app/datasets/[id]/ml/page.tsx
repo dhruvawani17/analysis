@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Brain, Loader2, Trophy, BarChart3, Target, Hash, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Loader2, Trophy, BarChart3, Target, Hash, Sparkles, Wand2 } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function MLPage({
@@ -170,6 +170,35 @@ export default function MLPage({
                 </CardContent>
               </Card>
             </div>
+
+            {/* Feature Engineering Applied */}
+            {result.feature_engineering && result.feature_engineering.applied && result.feature_engineering.applied.length > 0 && (
+              <Card className="bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Wand2 className="h-5 w-5 text-violet-500" />
+                    Feature Engineering Applied
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {result.feature_engineering.reasons && result.feature_engineering.reasons.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-violet-600 mb-1.5">Why these features?</p>
+                      {result.feature_engineering.reasons.map((reason: string, i: number) => (
+                        <p key={i} className="text-sm text-gray-600">• {reason}</p>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {result.feature_engineering.applied.map((step: string, i: number) => (
+                      <Badge key={i} className="bg-violet-100 text-violet-700 border-violet-200 text-xs">
+                        {step}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Model Comparison */}
             <Card className="bg-white/80 border-indigo-100">
