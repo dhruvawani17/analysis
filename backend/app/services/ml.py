@@ -5,51 +5,18 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import accuracy_score, r2_score
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 warnings.filterwarnings("ignore")
 
 
 def _get_models(problem_type: str, random_state: int = 42) -> dict:
-    from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-
     models: dict[str, Any] = {}
-
     if problem_type == "classification":
-        models["Random Forest"] = RandomForestClassifier(n_estimators=50, random_state=random_state, n_jobs=-1)
-        try:
-            import xgboost as xgb
-            models["XGBoost"] = xgb.XGBClassifier(n_estimators=50, random_state=random_state, n_jobs=-1, verbosity=0)
-        except ImportError:
-            pass
-        try:
-            import lightgbm as lgb
-            models["LightGBM"] = lgb.LGBMClassifier(n_estimators=50, random_state=random_state, n_jobs=-1, verbose=-1)
-        except ImportError:
-            pass
-        try:
-            from catboost import CatBoostClassifier
-            models["CatBoost"] = CatBoostClassifier(n_estimators=50, random_state=random_state, verbose=0)
-        except ImportError:
-            pass
+        models["Random Forest"] = RandomForestClassifier(n_estimators=100, random_state=random_state, n_jobs=-1)
     else:
-        models["Random Forest"] = RandomForestRegressor(n_estimators=50, random_state=random_state, n_jobs=-1)
-        try:
-            import xgboost as xgb
-            models["XGBoost"] = xgb.XGBRegressor(n_estimators=50, random_state=random_state, n_jobs=-1, verbosity=0)
-        except ImportError:
-            pass
-        try:
-            import lightgbm as lgb
-            models["LightGBM"] = lgb.LGBMRegressor(n_estimators=50, random_state=random_state, n_jobs=-1, verbose=-1)
-        except ImportError:
-            pass
-        try:
-            from catboost import CatBoostRegressor
-            models["CatBoost"] = CatBoostRegressor(n_estimators=50, random_state=random_state, verbose=0)
-        except ImportError:
-            pass
-
+        models["Random Forest"] = RandomForestRegressor(n_estimators=100, random_state=random_state, n_jobs=-1)
     return models
 
 
@@ -94,7 +61,6 @@ async def train_and_evaluate(df: pd.DataFrame, target: str) -> dict[str, Any]:
 
     best_score = -np.inf
     best_model_name = ""
-    best_model_obj = None
 
     for name, model in models.items():
         try:
@@ -127,7 +93,6 @@ async def train_and_evaluate(df: pd.DataFrame, target: str) -> dict[str, Any]:
             if score > best_score:
                 best_score = score
                 best_model_name = name
-                best_model_obj = model
         except Exception as e:
             results.append({
                 "model": name,
