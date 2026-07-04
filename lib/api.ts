@@ -1,6 +1,6 @@
 const isProd = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-const API_PREFIX = isProd ? "/api/backend" : "";
+const API_PREFIX = isProd ? "/api/backend" : "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { ...options?.headers as Record<string, string> };
@@ -22,7 +22,7 @@ export const api = {
 
   datasets: {
     list: () =>
-      request<Array<{ id: number; name: string; rows: number | null; columns: number | null; created_at: string }>>("/datasets/"),
+      request<Array<{ id: number; name: string; rows: number | null; columns: number | null; created_at: string }>>("/datasets"),
     get: (id: number) => request<import("./types").DatasetSummary>(`/datasets/${id}`),
     upload: (file: File) => {
       const form = new FormData();
@@ -32,6 +32,10 @@ export const api = {
         body: form,
       });
     },
+    clean: (id: number) =>
+      request<{ dataset_id: number; cleaning: Record<string, unknown>; rows: number; columns: number }>(`/datasets/clean/${id}`, {
+        method: "POST",
+      }),
     downloadUrl: (id: number, format: "csv" | "json" = "csv") =>
       `${BASE_URL}${API_PREFIX}/datasets/${id}/download?format=${format}`,
   },

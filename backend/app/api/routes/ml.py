@@ -4,22 +4,13 @@ from app.api.deps import get_dataset_or_404
 from app.db.models import Dataset
 from app.core.storage import load_dataframe
 from app.services.ml import train_and_evaluate
+from app.services.utils import get_id_columns
 
 router = APIRouter()
 
 
 class MLRequest(BaseModel):
     target_column: str
-
-
-class MLResult(BaseModel):
-    problem_type: str
-    target_column: str
-    best_model: str | None = None
-    best_score: float | None = None
-    all_results: list[dict] = []
-    num_features: int = 0
-    num_samples: int = 0
 
 
 @router.post("/train/{dataset_id}")
@@ -43,8 +34,11 @@ async def get_columns(
     dataset: Dataset = Depends(get_dataset_or_404),
 ):
     df = load_dataframe(dataset.file_path)
+    id_cols = get_id_columns(df)
     eligible = []
     for c in df.columns:
+        if c in id_cols:
+            continue
         if df[c].nunique() < 2:
             continue
         dtype = str(df[c].dtype)
@@ -59,6 +53,7 @@ async def get_columns(
             eligible.append({"name": c, "dtype": "float", "unique": unique, "problem_type": "regression"})
     return {
         "eligible_columns": eligible,
+        "excluded_columns": id_cols,
         "all_columns": list(df.columns),
         "dtypes": {c: str(t) for c, t in df.dtypes.items()},
     }

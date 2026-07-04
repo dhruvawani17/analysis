@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,8 @@ import {
   Sparkles,
   Download,
   Upload,
+  Wand2,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -39,6 +41,7 @@ export default function DatasetPage({
 }) {
   const { id } = use(params);
   const datasetId = parseInt(id, 10);
+  const queryClient = useQueryClient();
 
   const { data: dataset, isLoading } = useQuery({
     queryKey: ["dataset", datasetId],
@@ -52,6 +55,13 @@ export default function DatasetPage({
     ai_summary: string;
   } | null>(null);
 
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [cleanResult, setCleanResult] = useState<{
+    cleaning: Record<string, unknown>;
+    rows: number;
+    columns: number;
+  } | null>(null);
+
   const runAnalysis = async () => {
     setAnalyzing(true);
     try {
@@ -61,6 +71,19 @@ export default function DatasetPage({
       console.error("Analysis failed", e);
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const runCleaning = async () => {
+    setIsCleaning(true);
+    try {
+      const res = await api.datasets.clean(datasetId);
+      setCleanResult(res);
+      queryClient.invalidateQueries({ queryKey: ["dataset", datasetId] });
+    } catch (e) {
+      console.error("Cleaning failed", e);
+    } finally {
+      setIsCleaning(false);
     }
   };
 
@@ -145,6 +168,85 @@ export default function DatasetPage({
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Clean Data Card */}
+            {!cleanResult && !analysisResult && (
+              <Card className="bg-white/80 border-indigo-100 overflow-hidden">
+                <CardContent className="p-8 text-center">
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center mx-auto mb-4">
+                    <Wand2 className="h-7 w-7 text-emerald-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Clean your data first</h3>
+                  <p className="text-sm text-gray-500 mb-5">
+                    Fix missing values, remove duplicates, detect outliers, and standardize types
+                  </p>
+                  {dataset.cleaned ? (
+                    <div className="flex items-center justify-center gap-2 text-emerald-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="text-sm font-medium">Data already cleaned</span>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={runCleaning}
+                      disabled={isCleaning}
+                      size="lg"
+                      className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-200"
+                    >
+                      {isCleaning ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-4 w-4" />
+                      )}
+                      {isCleaning ? "Cleaning..." : "Clean Data"}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cleaning Report */}
+            {cleanResult && (
+              <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    Data Cleaned Successfully
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    {[
+                      { label: "Original Rows", value: cleanResult.cleaning.original_rows },
+                      { label: "Final Rows", value: cleanResult.cleaning.final_rows },
+                      { label: "Duplicates Removed", value: cleanResult.cleaning.duplicates_removed },
+                      { label: "Missing Fixed", value: cleanResult.cleaning.missing_fixed },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-xl bg-white/80 p-4 text-center border border-emerald-100">
+                        <p className="text-2xl font-bold text-gray-900">{String(item.value ?? "0")}</p>
+                        <p className="text-xs text-gray-500 mt-1">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {cleanResult.cleaning.cleaning_summary && (
+                    <p className="text-sm text-gray-600 mb-4">{String(cleanResult.cleaning.cleaning_summary)}</p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <a href={api.datasets.downloadUrl(datasetId, "csv")} download>
+                      <Button variant="outline" size="sm" className="gap-1.5 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300">
+                        <Download className="h-3.5 w-3.5" />
+                        Download Clean CSV
+                      </Button>
+                    </a>
+                    <a href={api.datasets.downloadUrl(datasetId, "json")} download>
+                      <Button variant="outline" size="sm" className="gap-1.5 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300">
+                        <Download className="h-3.5 w-3.5" />
+                        Download Clean JSON
+                      </Button>
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Run Analysis Button */}
             {!analysisResult && (
               <Card className="bg-white/80 border-indigo-100 overflow-hidden">
@@ -223,6 +325,28 @@ export default function DatasetPage({
                       <p className="text-sm leading-relaxed text-gray-700">
                         {analysisResult.ai_summary}
                       </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Insights */}
+                {eda?.insights && eda.insights.length > 0 && (
+                  <Card className="bg-white/80 border-indigo-100">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Sparkles className="h-5 w-5 text-amber-500" />
+                        Key Insights
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {eda.insights.map((insight: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
+                            <span className="text-amber-500 mt-0.5">•</span>
+                            <span className="text-sm text-gray-700">{insight.message}</span>
+                          </div>
+                        ))}
+                      </div>
                     </CardContent>
                   </Card>
                 )}

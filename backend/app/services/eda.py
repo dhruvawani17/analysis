@@ -4,6 +4,7 @@ import pandas as pd
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
+from app.services.utils import get_id_columns, get_analysis_columns
 
 
 def _safe(val: float | None, decimals: int = 4) -> float | None:
@@ -19,9 +20,8 @@ def _safe(val: float | None, decimals: int = 4) -> float | None:
 
 
 def run_eda(df: pd.DataFrame) -> dict:
-    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
-    date_cols = df.select_dtypes(include=["datetime64"]).columns.tolist()
+    id_cols = get_id_columns(df)
+    numeric_cols, categorical_cols, date_cols = get_analysis_columns(df)
 
     stats = {}
     for col in numeric_cols:
@@ -109,10 +109,13 @@ def run_eda(df: pd.DataFrame) -> dict:
         )
         missing_chart = json.loads(fig.to_json())
 
+    insights = _generate_insights(df, numeric_cols, categorical_cols, id_cols)
+
     result = {
         "shape": list(df.shape),
         "columns": list(df.columns),
         "dtypes": {c: str(t) for c, t in df.dtypes.items()},
+        "id_columns": id_cols,
         "numeric_columns": numeric_cols,
         "categorical_columns": categorical_cols,
         "date_columns": date_cols,
@@ -121,6 +124,7 @@ def run_eda(df: pd.DataFrame) -> dict:
         "date_stats": date_stats,
         "missing_summary": missing_summary,
         "correlation": corr_matrix,
+        "insights": insights,
         "charts": {
             "histograms": histograms,
             "box_plots": box_plots,
@@ -130,3 +134,50 @@ def run_eda(df: pd.DataFrame) -> dict:
     }
 
     return result
+
+
+def _generate_insights(df, numeric_cols, categorical_cols, id_cols) -> list[dict]:
+    insights = []
+
+    for col in categorical_cols:
+        vc = df[col].value_counts()
+        if len(vc) >= 2:
+            top = vc.index[0]
+            top_pct = vc.iloc[0] / len(df) * 100
+            if top_pct > 50:
+                insights.append({
+                    "type": "dominant_value",
+                    "column": col,
+                    "message": f"'{top}' appears in {top_pct:.0f}% of rows in '{col}'",
+                })
+
+    for i, col1 in enumerate(numeric_cols):
+        for col2 in numeric_cols[i + 1:]:
+            corr = df[col1].corr(df[col2])
+            if corr is not None and abs(corr) > 0.7:
+                direction = "positively" if corr > 0 else "negatively"
+                insights.append({
+                    "type": "correlation",
+                    "columns": [col1, col2],
+                    "message": f"'{col1}' and '{col2}' are strongly {direction} correlated ({corr:.2f})",
+                })
+
+    for col in categorical_cols:
+        if col in id_cols:
+            continue
+        for num_col in numeric_cols:
+            means = df.groupby(col)[num_col].mean()
+            if len(means) >= 2:
+                top_cat = means.idxmax()
+                bot_cat = means.idxmin()
+                ratio = means.max() / means.min() if means.min() != 0 else None
+                if ratio and ratio > 2:
+                    insights.append({
+                        "type": "group_difference",
+                        "categorical": col,
+                        "numeric": num_col,
+                        "message": f"'{top_cat}' has {ratio:.1f}x higher average '{num_col}' than '{bot_cat}' in '{col}'",
+                    })
+                    break
+
+    return insights[:10]

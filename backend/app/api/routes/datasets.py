@@ -1,10 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
+
 from app.api.deps import get_db, get_dataset_or_404
 from app.services.ingestion import import_dataset
+from app.services.cleaning import clean_dataset
 from app.db.models import Dataset
-from app.core.storage import load_dataframe
+from app.core.storage import load_dataframe, save_dataframe
 import io, csv, json
 
 router = APIRouter()
@@ -19,7 +22,7 @@ async def upload_dataset(
     return {"id": dataset.id, "name": dataset.name, "status": "imported"}
 
 
-@router.get("/")
+@router.get("")
 async def list_datasets(
     db: AsyncSession = Depends(get_db),
 ):
@@ -51,6 +54,7 @@ async def get_dataset(
         "column_names": json.loads(dataset.column_names) if dataset.column_names else [],
         "dtypes": json.loads(dataset.dtypes) if dataset.dtypes else {},
         "created_at": dataset.created_at.isoformat(),
+        "cleaned": dataset.cleaned_file_path is not None,
     }
 
 
@@ -80,3 +84,29 @@ async def download_dataset(
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}_clean.{ext}"'},
     )
+
+
+@router.post("/clean/{dataset_id}")
+async def clean_data(
+    dataset: Dataset = Depends(get_dataset_or_404),
+    db: AsyncSession = Depends(get_db),
+):
+    df = load_dataframe(dataset.file_path)
+    df_clean, cleaning_report = clean_dataset(df)
+
+    cleaned_path = save_dataframe(df_clean, f"cleaned_{dataset.id}_{uuid.uuid4().hex[:8]}")
+
+    dataset.cleaned_file_path = str(cleaned_path)
+    dataset.data_quality_report = json.dumps(cleaning_report)
+    dataset.row_count = len(df_clean)
+    dataset.column_count = len(df_clean.columns)
+    dataset.column_names = json.dumps(list(df_clean.columns))
+    dataset.dtypes = json.dumps({c: str(t) for c, t in df_clean.dtypes.items()})
+    await db.commit()
+
+    return {
+        "dataset_id": dataset.id,
+        "cleaning": cleaning_report,
+        "rows": len(df_clean),
+        "columns": len(df_clean.columns),
+    }

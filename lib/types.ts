@@ -6,6 +6,7 @@ export interface DatasetSummary {
   column_names: string[];
   dtypes: Record<string, string>;
   created_at: string;
+  cleaned: boolean;
 }
 
 export interface DatasetListItem {

@@ -236,6 +236,101 @@ export default function MLPage({
                 </Table>
               </CardContent>
             </Card>
+
+            {/* Insights */}
+            {result.insights && result.insights.length > 0 && (
+              <Card className="bg-white/80 border-indigo-100">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Sparkles className="h-5 w-5 text-amber-500" />
+                    Data Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {result.insights.map((insight: any, i: number) => (
+                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
+                        <span className="text-amber-500 mt-0.5">•</span>
+                        <span className="text-sm text-gray-700">{insight.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Predictions */}
+            {result.predictions && (
+              <Card className="bg-white/80 border-indigo-100">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Target className="h-5 w-5 text-emerald-500" />
+                    Predictions & Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {result.predictions.top_predictions && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Top Predicted Values</h4>
+                      <div className="space-y-2">
+                        {result.predictions.top_predictions.map((p: any, i: number) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-gray-900 w-32 truncate">{p.value}</span>
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
+                                style={{ width: `${p.probability * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500 w-16 text-right">{(p.probability * 100).toFixed(1)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {result.predictions.conditional_predictions && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        Predictions by {result.predictions.conditional_predictions.feature}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(result.predictions.conditional_predictions.predictions).map(([k, v]) => (
+                          <div key={k} className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                            <span className="text-xs text-gray-500">{k}</span>
+                            <p className="text-sm font-medium text-emerald-700">{v as string}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {result.predictions.statistics && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Target Statistics</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {Object.entries(result.predictions.statistics).map(([k, v]) => (
+                          <div key={k} className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100 text-center">
+                            <p className="text-lg font-bold text-emerald-700">{v as number}</p>
+                            <p className="text-xs text-gray-500 capitalize">{k}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {result.predictions.correlated_feature && (
+                    <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-100">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">{result.predictions.correlated_feature.feature}</span>
+                        {" "}is {result.predictions.correlated_feature.trend} with {result.target_column}
+                        {" "}(r={result.predictions.correlated_feature.correlation})
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </main>

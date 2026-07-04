@@ -50,7 +50,12 @@ async def analyze_dataset(
 ):
     df = load_dataframe(dataset.file_path)
 
-    df_clean, cleaning_report = clean_dataset(df)
+    if dataset.cleaned_file_path:
+        df_clean = load_dataframe(dataset.cleaned_file_path)
+        cleaning_report = json.loads(dataset.data_quality_report) if dataset.data_quality_report else {}
+    else:
+        df_clean, cleaning_report = clean_dataset(df)
+
     eda_result = run_eda(df_clean)
 
     import uuid
