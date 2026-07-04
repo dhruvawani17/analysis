@@ -3,6 +3,7 @@ mangum>=0.17.0
 sqlalchemy[asyncio]>=2.0.0
 aiosqlite>=0.20.0
 pandas>=2.2.0
+pyarrow>=17.0.0
 numpy>=2.0.0
 openpyxl>=3.1.0
 python-multipart>=0.0.10
