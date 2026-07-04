@@ -13,10 +13,42 @@ warnings.filterwarnings("ignore")
 
 def _get_models(problem_type: str, random_state: int = 42) -> dict:
     models: dict[str, Any] = {}
+
     if problem_type == "classification":
         models["Random Forest"] = RandomForestClassifier(n_estimators=100, random_state=random_state, n_jobs=-1)
+        try:
+            import xgboost as xgb
+            models["XGBoost"] = xgb.XGBClassifier(n_estimators=100, random_state=random_state, n_jobs=-1, verbosity=0)
+        except ImportError:
+            pass
+        try:
+            import lightgbm as lgb
+            models["LightGBM"] = lgb.LGBMClassifier(n_estimators=100, random_state=random_state, n_jobs=-1, verbose=-1)
+        except ImportError:
+            pass
+        try:
+            from catboost import CatBoostClassifier
+            models["CatBoost"] = CatBoostClassifier(n_estimators=100, random_state=random_state, verbose=0)
+        except ImportError:
+            pass
     else:
         models["Random Forest"] = RandomForestRegressor(n_estimators=100, random_state=random_state, n_jobs=-1)
+        try:
+            import xgboost as xgb
+            models["XGBoost"] = xgb.XGBRegressor(n_estimators=100, random_state=random_state, n_jobs=-1, verbosity=0)
+        except ImportError:
+            pass
+        try:
+            import lightgbm as lgb
+            models["LightGBM"] = lgb.LGBMRegressor(n_estimators=100, random_state=random_state, n_jobs=-1, verbose=-1)
+        except ImportError:
+            pass
+        try:
+            from catboost import CatBoostRegressor
+            models["CatBoost"] = CatBoostRegressor(n_estimators=100, random_state=random_state, verbose=0)
+        except ImportError:
+            pass
+
     return models
 
 
