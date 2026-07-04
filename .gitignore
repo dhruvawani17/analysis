@@ -1,0 +1,15 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+build/
+node_modules/
+.next/
+*.parquet
+data/uploads/*
+!data/uploads/.gitkeep
+*.db
+*.sqlite3
