@@ -4,10 +4,11 @@ import os
 
 
 class Settings(BaseSettings):
-    llm_provider: Literal["openai", "anthropic", "gemini"] = "openai"
+    llm_provider: Literal["openai", "anthropic", "gemini", "nvidia"] = "gemini"
     openai_api_key: str = ""
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
+    nvidia_api_key: str = ""
     llm_model: str = "gpt-4o"
 
     database_url: str = "sqlite+aiosqlite:///./data/analyst.db"

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.config import settings
-from app.api.routes import datasets, analysis, qa, ml, reports
+from app.api.routes import datasets, analysis, qa, ml, reports, copilot, dashboard
 from app.db.models import Base
 from app.api.deps import engine
 
@@ -39,6 +39,8 @@ app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(qa.router, prefix="/api/qa", tags=["qa"])
 app.include_router(ml.router, prefix="/api/ml", tags=["ml"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
+app.include_router(copilot.router, prefix="/api/copilot", tags=["copilot"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 
 
 @app.get("/api/health")

@@ -18,13 +18,13 @@ import {
 import {
   Loader2,
   ArrowLeft,
-  MessageSquare,
+  Bot,
+  LayoutDashboard,
   Brain,
   FileText,
   BarChart3,
   Sparkles,
   Download,
-  Upload,
   Wand2,
   CheckCircle2,
 } from "lucide-react";
@@ -129,16 +129,16 @@ export default function DatasetPage({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link href={`/datasets/${datasetId}/chat`}>
+              <Button className="gap-1.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-lg shadow-indigo-200">
+                <Bot className="h-4 w-4" />
+                AI Copilot
+              </Button>
+            </Link>
             <a href={api.datasets.downloadUrl(datasetId, "csv")} download>
               <Button variant="outline" size="sm" className="gap-1.5 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300">
                 <Download className="h-3.5 w-3.5" />
                 CSV
-              </Button>
-            </a>
-            <a href={api.datasets.downloadUrl(datasetId, "json")} download>
-              <Button variant="outline" size="sm" className="gap-1.5 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300">
-                <Download className="h-3.5 w-3.5" />
-                JSON
               </Button>
             </a>
           </div>
@@ -152,22 +152,100 @@ export default function DatasetPage({
               <BarChart3 className="h-4 w-4 mr-1.5" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="qa" className="rounded-lg data-[state=active]:bg-indigo-500 data-[state=active]:text-white">
-              <MessageSquare className="h-4 w-4 mr-1.5" />
-              Q&A
-            </TabsTrigger>
-            <TabsTrigger value="ml" className="rounded-lg data-[state=active]:bg-indigo-500 data-[state=active]:text-white">
-              <Brain className="h-4 w-4 mr-1.5" />
-              Auto ML
-            </TabsTrigger>
-            <TabsTrigger value="report" className="rounded-lg data-[state=active]:bg-indigo-500 data-[state=active]:text-white">
-              <FileText className="h-4 w-4 mr-1.5" />
-              Report
-            </TabsTrigger>
           </TabsList>
+          <div className="flex gap-1 bg-white/80 backdrop-blur-sm border border-indigo-100 p-1 rounded-xl -mt-6 mb-6">
+            <Link href={`/datasets/${datasetId}/chat`}>
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+                <Bot className="h-4 w-4" />
+                Chat
+              </Button>
+            </Link>
+            <Link href={`/datasets/${datasetId}/dashboard`}>
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+            <Link href={`/datasets/${datasetId}/ml`}>
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+                <Brain className="h-4 w-4" />
+                Models
+              </Button>
+            </Link>
+            <Link href={`/datasets/${datasetId}/report`}>
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+                <FileText className="h-4 w-4" />
+                Reports
+              </Button>
+            </Link>
+          </div>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Quick Actions */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Link href={`/datasets/${datasetId}/chat`}>
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-sm">
+                        <Bot className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-sm">AI Copilot</h3>
+                        <p className="text-xs text-gray-500">Chat with your data</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link href={`/datasets/${datasetId}/dashboard`}>
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
+                        <LayoutDashboard className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-sm">Dashboard</h3>
+                        <p className="text-xs text-gray-500">AI-generated dashboard</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link href={`/datasets/${datasetId}/ml`}>
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-sm">
+                        <Brain className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-sm">Models</h3>
+                        <p className="text-xs text-gray-500">Train ML models</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link href={`/datasets/${datasetId}/report`}>
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-sm">
+                        <FileText className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-sm">Reports</h3>
+                        <p className="text-xs text-gray-500">Generate reports</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+
             {/* Clean Data Card */}
             {!cleanResult && !analysisResult && (
               <Card className="bg-white/80 border-indigo-100 overflow-hidden">
@@ -226,23 +304,6 @@ export default function DatasetPage({
                       </div>
                     ))}
                   </div>
-                  {cleanResult.cleaning.cleaning_summary && (
-                    <p className="text-sm text-gray-600 mb-4">{String(cleanResult.cleaning.cleaning_summary)}</p>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <a href={api.datasets.downloadUrl(datasetId, "csv")} download>
-                      <Button variant="outline" size="sm" className="gap-1.5 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300">
-                        <Download className="h-3.5 w-3.5" />
-                        Download Clean CSV
-                      </Button>
-                    </a>
-                    <a href={api.datasets.downloadUrl(datasetId, "json")} download>
-                      <Button variant="outline" size="sm" className="gap-1.5 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300">
-                        <Download className="h-3.5 w-3.5" />
-                        Download Clean JSON
-                      </Button>
-                    </a>
-                  </div>
                 </CardContent>
               </Card>
             )}
@@ -279,7 +340,7 @@ export default function DatasetPage({
             <Card className="bg-white/80 border-indigo-100">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Upload className="h-4 w-4 text-indigo-500" />
+                  <BarChart3 className="h-4 w-4 text-indigo-500" />
                   Dataset Schema
                 </CardTitle>
               </CardHeader>
@@ -312,7 +373,6 @@ export default function DatasetPage({
             {/* Analysis Results */}
             {analysisResult && (
               <>
-                {/* AI Summary */}
                 {analysisResult.ai_summary && analysisResult.ai_summary !== "AI summary generation failed (check LLM provider configuration)." && (
                   <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
                     <CardHeader>
@@ -322,14 +382,11 @@ export default function DatasetPage({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm leading-relaxed text-gray-700">
-                        {analysisResult.ai_summary}
-                      </p>
+                      <p className="text-sm leading-relaxed text-gray-700">{analysisResult.ai_summary}</p>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* Insights */}
                 {eda?.insights && eda.insights.length > 0 && (
                   <Card className="bg-white/80 border-indigo-100">
                     <CardHeader>
@@ -351,31 +408,6 @@ export default function DatasetPage({
                   </Card>
                 )}
 
-                {/* Cleaning Stats */}
-                {cleaning && (
-                  <Card className="bg-white/80 border-indigo-100">
-                    <CardHeader>
-                      <CardTitle className="text-base">Data Quality Report</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {[
-                          { label: "Original Rows", value: cleaning.original_rows, color: "indigo" },
-                          { label: "Duplicates Removed", value: cleaning.duplicates_removed, color: "red" },
-                          { label: "Missing Fixed", value: cleaning.missing_fixed, color: "amber" },
-                          { label: "Outliers Detected", value: cleaning.outliers_detected, color: "violet" },
-                        ].map((item) => (
-                          <div key={item.label} className="rounded-xl bg-gray-50 p-4 text-center border border-gray-100">
-                            <p className="text-2xl font-bold text-gray-900">{String(item.value ?? "0")}</p>
-                            <p className="text-xs text-gray-500 mt-1">{item.label}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Charts */}
                 <div className="grid gap-6 lg:grid-cols-2">
                   {charts?.missing && (
                     <Card className="bg-white/80 border-indigo-100">
@@ -410,7 +442,6 @@ export default function DatasetPage({
                   )}
                 </div>
 
-                {/* Stats Table */}
                 {eda?.stats && Object.keys(eda.stats).length > 0 && (
                   <Card className="bg-white/80 border-indigo-100">
                     <CardHeader>
@@ -428,9 +459,7 @@ export default function DatasetPage({
                               <TableHead className="text-indigo-700">Mean</TableHead>
                               <TableHead className="text-indigo-700">Std</TableHead>
                               <TableHead className="text-indigo-700">Min</TableHead>
-                              <TableHead className="text-indigo-700">Q1</TableHead>
                               <TableHead className="text-indigo-700">Median</TableHead>
-                              <TableHead className="text-indigo-700">Q3</TableHead>
                               <TableHead className="text-indigo-700">Max</TableHead>
                               <TableHead className="text-indigo-700">Missing</TableHead>
                             </TableRow>
@@ -442,9 +471,7 @@ export default function DatasetPage({
                                 <TableCell>{s.mean?.toFixed(2) ?? "-"}</TableCell>
                                 <TableCell>{s.std?.toFixed(2) ?? "-"}</TableCell>
                                 <TableCell>{s.min?.toFixed(2) ?? "-"}</TableCell>
-                                <TableCell>{s.q1?.toFixed(2) ?? "-"}</TableCell>
                                 <TableCell>{s.median?.toFixed(2) ?? "-"}</TableCell>
-                                <TableCell>{s.q3?.toFixed(2) ?? "-"}</TableCell>
                                 <TableCell>{s.max?.toFixed(2) ?? "-"}</TableCell>
                                 <TableCell>{s.missing}</TableCell>
                               </TableRow>
@@ -456,7 +483,6 @@ export default function DatasetPage({
                   </Card>
                 )}
 
-                {/* Histograms */}
                 {charts?.histograms && Object.keys(charts.histograms).length > 0 && (
                   <div className="grid gap-6 lg:grid-cols-2">
                     {Object.entries(charts.histograms as Record<string, any>).map(
@@ -478,90 +504,8 @@ export default function DatasetPage({
                     )}
                   </div>
                 )}
-
-                {/* Action Cards */}
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {[
-                    { href: `/datasets/${datasetId}/qa`, icon: MessageSquare, title: "Ask Questions", desc: "Natural language Q&A about your data", color: "from-indigo-500 to-blue-500" },
-                    { href: `/datasets/${datasetId}/ml`, icon: Brain, title: "Auto ML", desc: "Train and compare ML models", color: "from-violet-500 to-purple-500" },
-                    { href: `/datasets/${datasetId}/report`, icon: FileText, title: "Report", desc: "Generate a downloadable report", color: "from-pink-500 to-rose-500" },
-                  ].map((item) => (
-                    <Link key={item.title} href={item.href}>
-                      <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
-                        <CardContent className="p-5">
-                          <div className="flex items-start gap-3">
-                            <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-sm shrink-0`}>
-                              <item.icon className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                              <p className="text-sm text-gray-500">{item.desc}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
               </>
             )}
-          </TabsContent>
-
-          {/* Q&A Tab */}
-          <TabsContent value="qa">
-            <Card className="bg-white/80 border-indigo-100">
-              <CardContent className="p-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="h-7 w-7 text-indigo-500" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Natural Language Q&A</h3>
-                <p className="text-sm text-gray-500 mb-5">Ask questions about your data in plain English</p>
-                <Link href={`/datasets/${datasetId}/qa`}>
-                  <Button className="gap-2 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 shadow-lg shadow-indigo-200">
-                    <MessageSquare className="h-4 w-4" />
-                    Open Q&A
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* ML Tab */}
-          <TabsContent value="ml">
-            <Card className="bg-white/80 border-indigo-100">
-              <CardContent className="p-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mx-auto mb-4">
-                  <Brain className="h-7 w-7 text-violet-500" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Auto ML</h3>
-                <p className="text-sm text-gray-500 mb-5">Train and compare ML models automatically</p>
-                <Link href={`/datasets/${datasetId}/ml`}>
-                  <Button className="gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-200">
-                    <Brain className="h-4 w-4" />
-                    Open Auto ML
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Report Tab */}
-          <TabsContent value="report">
-            <Card className="bg-white/80 border-indigo-100">
-              <CardContent className="p-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-100 to-rose-100 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="h-7 w-7 text-pink-500" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Analysis Report</h3>
-                <p className="text-sm text-gray-500 mb-5">Generate a comprehensive downloadable report</p>
-                <Link href={`/datasets/${datasetId}/report`}>
-                  <Button className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg shadow-pink-200">
-                    <FileText className="h-4 w-4" />
-                    Open Report
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </main>

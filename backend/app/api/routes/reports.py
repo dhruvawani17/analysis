@@ -36,6 +36,8 @@ async def generate_report(
         cleaning=cleaning,
         charts=eda_result.get("charts"),
         ai_summary=dataset.ai_summary,
+        df=df,
+        eda_result=eda_result,
     )
 
     return {"html": html, "dataset_id": dataset.id}
@@ -58,6 +60,8 @@ async def download_report(
         cleaning=cleaning,
         charts=eda_result.get("charts"),
         ai_summary=dataset.ai_summary,
+        df=df,
+        eda_result=eda_result,
     )
 
     if format == "pdf":

@@ -73,4 +73,34 @@ export const api = {
     downloadUrl: (datasetId: number, format = "pdf") =>
       `${BASE_URL}${API_PREFIX}/reports/download/${datasetId}?format=${format}`,
   },
+
+  copilot: {
+    chat: (datasetId: number, message: string, conversationId?: string) =>
+      request<import("./types").CopilotChatResponse>(`/copilot/chat/${datasetId}`, {
+        method: "POST",
+        body: JSON.stringify({ message, conversation_id: conversationId }),
+      }),
+    getContext: (datasetId: number) =>
+      request<import("./types").CopilotContext>(`/copilot/context/${datasetId}`),
+    getHistory: (datasetId: number) =>
+      request<{ conversation_id: string; messages: import("./types").CopilotMessage[] }>(`/copilot/history/${datasetId}`),
+    clearHistory: (datasetId: number) =>
+      request<{ status: string }>(`/copilot/history/${datasetId}`, { method: "DELETE" }),
+    plan: (datasetId: number) =>
+      request<import("./types").AnalysisPlan>(`/copilot/plan/${datasetId}`, { method: "POST" }),
+    runPlan: (datasetId: number, tools?: string[]) =>
+      request<{ conversation_id: string; results: import("./types").ToolResult[]; summary: string }>(`/copilot/run-plan/${datasetId}`, {
+        method: "POST",
+        body: JSON.stringify({ tools }),
+      }),
+    tools: () =>
+      request<{ categories: Record<string, Array<{ name: string; description: string; category: string; estimated_time: number }>> }>("/copilot/tools"),
+  },
+
+  dashboard: {
+    get: (datasetId: number) =>
+      request<{ config: import("./types").DashboardConfig }>(`/dashboard/${datasetId}`),
+    generate: (datasetId: number) =>
+      request<{ config: import("./types").DashboardConfig }>(`/dashboard/generate/${datasetId}`, { method: "POST" }),
+  },
 };

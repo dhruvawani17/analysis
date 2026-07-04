@@ -1,4 +1,5 @@
 import warnings
+import json
 from typing import Any
 
 import numpy as np
@@ -10,6 +11,229 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from app.services.utils import get_id_columns
 
 warnings.filterwarnings("ignore")
+
+
+def _parse_llm_json(text: str) -> dict:
+    import re
+    import json
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[1]
+    if cleaned.endswith("```"):
+        cleaned = cleaned.rsplit("```", 1)[0]
+    cleaned = cleaned.strip()
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    try:
+        start = cleaned.index("{")
+        end = cleaned.rindex("}") + 1
+        return json.loads(cleaned[start:end])
+    except (ValueError, json.JSONDecodeError):
+        pass
+
+    try:
+        cleaned = re.sub(r',\s*}', '}', cleaned)
+        cleaned = re.sub(r',\s*]', ']', cleaned)
+        cleaned = re.sub(r':\s*"([^"]*)"([^",}\]])', r': "\1"\2', cleaned)
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    return {}
+
+
+async def generate_data_improvements(df: pd.DataFrame, target: str) -> dict:
+    from app.llm.factory import get_llm_provider
+
+    llm = get_llm_provider()
+
+    profile = {
+        "shape": list(df.shape),
+        "target": target,
+        "dtypes": {c: str(t) for c, t in df.dtypes.items()},
+        "missing": {c: int(v) for c, v in df.isnull().sum().items() if v > 0},
+        "skew": {c: round(float(df[c].skew()), 2) for c in df.select_dtypes(include=["number"]).columns if c != target},
+        "high_cardinality_cat": [c for c in df.select_dtypes(include=["object", "category"]).columns if c != target and df[c].nunique() > 20],
+        "low_cardinality_cat": [c for c in df.select_dtypes(include=["object", "category"]).columns if c != target and df[c].nunique() <= 20],
+        "near_zero_var": [c for c in df.select_dtypes(include=["number"]).columns if c != target and df[c].std() < df[c].mean() * 0.01 if df[c].mean() != 0],
+        "sample_rows": df.head(5).to_dict(orient="records"),
+    }
+
+    prompt = f"""You are a data scientist preparing data for ML. Analyze the dataset profile below and suggest specific actionable improvements.
+
+## Dataset Profile
+{json.dumps(profile)}
+
+## Instructions
+Suggest improvements that will make ML training better. Return JSON with:
+1. "drop_columns": columns to remove (leaks, useless, high cardinality identifiers)
+2. "combine_rare": {{"column": "venue", "threshold": 5, "label": "Other"}} — combine rare categories
+3. "create_features": ["run_rate = runs / matches", "margin_log = log1p(margin)"] — new features to engineer
+4. "encode": {{"column": "team", "method": "onehot" or "label" or "target"}}
+5. "scale": {{"columns": ["first_ings_score", "highscore"], "method": "standard" or "robust" or "minmax"}}
+6. "outlier_strategy": "clip" or "remove" or "log_transform" for numeric columns with extreme outliers
+7. "suggestions": array of 2-4 general suggestions (e.g., "Combine stage 'Qualifier' and 'Eliminator' into 'Playoffs'")
+
+Return ONLY valid JSON, no markdown."""
+
+    try:
+        response = await llm.chat([
+            {"role": "system", "content": "You are an expert ML engineer preparing data for training. Always respond with valid JSON only."},
+            {"role": "user", "content": prompt},
+        ])
+
+        parsed = _parse_llm_json(response)
+        if not parsed:
+            raise ValueError("Could not parse JSON from LLM response")
+
+        return {
+            "drop_columns": parsed.get("drop_columns", []),
+            "combine_rare": parsed.get("combine_rare", {}),
+            "create_features": parsed.get("create_features", []),
+            "encode": parsed.get("encode", {}),
+            "scale": parsed.get("scale", {}),
+            "outlier_strategy": parsed.get("outlier_strategy", ""),
+            "suggestions": parsed.get("suggestions", []),
+        }
+    except Exception as e:
+        return {
+            "drop_columns": [],
+            "combine_rare": {},
+            "create_features": [],
+            "encode": {},
+            "scale": {},
+            "outlier_strategy": "",
+            "suggestions": [f"LLM analysis unavailable: {str(e)}"],
+        }
+
+
+def apply_data_improvements(df: pd.DataFrame, target: str, improvements: dict) -> tuple[pd.DataFrame, list[str]]:
+    applied = []
+    df = df.copy()
+
+    drop_cols = improvements.get("drop_columns", [])
+    valid_drops = [c for c in drop_cols if c in df.columns and c != target]
+    if valid_drops:
+        df = df.drop(columns=valid_drops)
+        applied.append(f"Dropped {len(valid_drops)} columns ({', '.join(valid_drops[:5])}{'...' if len(valid_drops) > 5 else ''})")
+
+    combine = improvements.get("combine_rare", {})
+    if combine and isinstance(combine, dict):
+        col = combine.get("column")
+        threshold = combine.get("threshold", 5)
+        label = combine.get("label", "Other")
+        if col and col in df.columns and col != target:
+            vc = df[col].value_counts()
+            rare = vc[vc < threshold].index
+            if len(rare) > 0:
+                df[col] = df[col].replace(rare, label)
+                applied.append(f"Combined {len(rare)} rare values in '{col}' into '{label}'")
+
+    features = improvements.get("create_features", [])
+    for feat in (features or []):
+        try:
+            if isinstance(feat, str) and "=" in feat:
+                name, expr = feat.split("=", 1)
+                name = name.strip()
+                expr = expr.strip()
+                local_vars = {c: df[c] for c in df.select_dtypes(include=["number"]).columns}
+                df[name] = eval(expr, {"__builtins__": {}}, local_vars)
+                applied.append(f"Created feature '{name}' = {expr}")
+        except Exception:
+            continue
+
+    return df, applied
+
+
+async def generate_llm_predictions(df: pd.DataFrame, target: str, problem_type: str, results: list[dict], feature_cols: list[str]) -> dict:
+    from app.llm.factory import get_llm_provider
+
+    llm = get_llm_provider()
+
+    sample = df.head(10).to_string(index=False)
+    best = next((r for r in results if r.get("test_score") is not None), None)
+    best_model = best["model"] if best else "unknown"
+    best_score = best.get("test_score") if best else None
+
+    top_features = feature_cols[:10]
+
+    if problem_type == "classification":
+        vc = df[target].value_counts()
+        class_dist = {str(k): int(v) for k, v in vc.head(5).items()}
+    else:
+        class_dist = None
+
+    prompt = f"""You are a data scientist analyzing a dataset. Based on the model training results below, provide USEFUL, ACTIONABLE predictions and insights.
+
+## Dataset Info
+- Target column: '{target}'
+- Problem type: {problem_type}
+- Samples: {len(df)}
+- Features used: {len(feature_cols)}
+- Top features: {', '.join(top_features)}
+
+## Model Results
+- Best model: {best_model} (score: {best_score})
+{chr(10).join(f"- {r['model']}: {r.get('test_score', 'error')}" for r in results if 'test_score' in r)}
+
+## Class Distribution (if classification)
+{class_dist if class_dist else 'N/A (regression)'}
+
+## Sample Data (first 5 rows)
+{df.head(5).to_string(index=False)}
+
+Provide your response as JSON with these keys:
+1. "summary": A 2-3 sentence plain-English summary of what the model found
+2. "key_findings": Array of 3-5 plain strings with specific findings
+3. "predictions": Array of 3-5 plain strings with scenario-based predictions
+4. "recommendations": Array of 2-3 plain strings with actionable recommendations
+5. "risk_factors": Array of 1-2 plain strings with things that could affect reliability
+
+IMPORTANT: Every array value must be a plain string, not an object. Example: "key_findings": ["Finding 1", "Finding 2"]
+Return ONLY valid JSON, no markdown, no extra text."""
+
+    try:
+        response = await llm.chat([
+            {"role": "system", "content": "You are an expert data scientist. Always respond with valid JSON only. All array values must be plain strings, not objects."},
+            {"role": "user", "content": prompt},
+        ])
+
+        parsed = _parse_llm_json(response)
+        if not parsed:
+            raise ValueError("Could not parse JSON from LLM response")
+
+        def _to_str_list(val: any) -> list[str]:
+            if not isinstance(val, list):
+                return []
+            result = []
+            for item in val:
+                if isinstance(item, str):
+                    result.append(item)
+                elif isinstance(item, dict):
+                    result.append(item.get("text", item.get("finding", item.get("prediction", item.get("recommendation", item.get("risk_factor", str(item)))))))
+                else:
+                    result.append(str(item))
+            return result
+
+        return {
+            "summary": str(parsed.get("summary", "")),
+            "key_findings": _to_str_list(parsed.get("key_findings", [])),
+            "predictions": _to_str_list(parsed.get("predictions", [])),
+            "recommendations": _to_str_list(parsed.get("recommendations", [])),
+            "risk_factors": _to_str_list(parsed.get("risk_factors", [])),
+        }
+    except Exception as e:
+        return {
+            "summary": f"LLM analysis unavailable: {str(e)}",
+            "key_findings": [],
+            "predictions": [],
+            "recommendations": [],
+            "risk_factors": [],
+        }
 
 
 def detect_feature_engineering(df: pd.DataFrame, target: str) -> dict:
@@ -322,6 +546,15 @@ async def train_and_evaluate(df: pd.DataFrame, target: str, feature_engineering:
         df = df.copy()
         df[target] = le.fit_transform(df[target].astype(str))
 
+    improvements = {}
+    improvement_applied: list[str] = []
+    try:
+        improvements = await generate_data_improvements(df, target)
+        df, improvement_applied = apply_data_improvements(df, target, improvements)
+    except Exception:
+        improvements = {"suggestions": []}
+        improvement_applied = []
+
     if feature_engineering is None:
         fe_opts = None
     elif feature_engineering == "auto":
@@ -394,6 +627,11 @@ async def train_and_evaluate(df: pd.DataFrame, target: str, feature_engineering:
     insights = get_insights(df, target, problem_type, results)
     predictions = generate_predictions(df, target, problem_type, feature_cols)
 
+    try:
+        llm_predictions = await generate_llm_predictions(df, target, problem_type, results, feature_cols)
+    except Exception:
+        llm_predictions = {"summary": "", "key_findings": [], "predictions": [], "recommendations": [], "risk_factors": []}
+
     return {
         "problem_type": problem_type,
         "target_column": target,
@@ -406,5 +644,11 @@ async def train_and_evaluate(df: pd.DataFrame, target: str, feature_engineering:
         "num_samples": len(df),
         "insights": insights,
         "predictions": predictions,
+        "llm_analysis": llm_predictions,
         "feature_engineering": fe_info,
+        "data_improvements": {
+            "suggestions": improvements.get("suggestions", []),
+            "applied": improvement_applied,
+            "details": improvements,
+        },
     }

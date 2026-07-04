@@ -11,11 +11,8 @@ import {
   ArrowRight,
   Database,
   Loader2,
-  BarChart3,
-  Brain,
-  MessageSquare,
+  Bot,
   Sparkles,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,7 +50,7 @@ export default function HomePage() {
         setUploading(true);
         try {
           const result = await uploadMutation.mutateAsync(files[0]);
-          router.push(`/datasets/${result.id}`);
+          router.push(`/datasets/${result.id}/chat`);
         } finally {
           setUploading(false);
         }
@@ -68,11 +65,11 @@ export default function HomePage() {
         <div className="container mx-auto flex items-center justify-between py-4 px-6">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-              <Database className="h-5 w-5 text-white" />
+              <Bot className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">AI Data Analyst</h1>
-              <p className="text-[11px] text-gray-400 -mt-0.5">Upload. Analyze. Discover.</p>
+              <p className="text-[11px] text-gray-400 -mt-0.5">Your AI-powered data copilot</p>
             </div>
           </div>
           {datasets && datasets.length > 0 && (
@@ -88,14 +85,13 @@ export default function HomePage() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5 text-xs font-medium text-indigo-700 mb-4">
             <Sparkles className="h-3.5 w-3.5" />
-            Powered by AI
+            AI-Powered Analysis
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Upload your data,<br />get instant insights
+            Upload data, let AI do the rest
           </h2>
           <p className="text-gray-500 max-w-md mx-auto">
-            Drop a CSV, Excel, or JSON file and let AI analyze patterns, answer questions,
-            and build predictive models automatically.
+            Drop a file and your AI copilot will clean, analyze, visualize, and model your data — all through natural conversation.
           </p>
         </div>
 
@@ -139,9 +135,9 @@ export default function HomePage() {
         {!datasets || datasets.length === 0 ? (
           <div className="grid md:grid-cols-3 gap-4 mb-10">
             {[
-              { icon: BarChart3, title: "Auto EDA", desc: "Instant statistics, correlations, and visualizations" },
-              { icon: MessageSquare, title: "Natural Language Q&A", desc: "Ask questions about your data in plain English" },
-              { icon: Brain, title: "Auto ML", desc: "Train and compare multiple ML models automatically" },
+              { icon: Bot, title: "AI Copilot", desc: "Chat with your data — ask questions, get insights, run analysis" },
+              { icon: Sparkles, title: "Auto Everything", desc: "AI automatically cleans, analyzes, models, and visualizes" },
+              { icon: Database, title: "One-Click Deploy", desc: "Export models as REST API, Docker, Streamlit, or notebooks" },
             ].map((f) => (
               <Card key={f.title} className="bg-white/60 border-indigo-100 hover:border-indigo-200 transition-colors">
                 <CardContent className="p-5">
@@ -160,12 +156,12 @@ export default function HomePage() {
             <h2 className="text-lg font-bold text-gray-900 mb-4">Your Datasets</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {datasets.map((d) => (
-                <Link key={d.id} href={`/datasets/${d.id}`}>
+                <Link key={d.id} href={`/datasets/${d.id}/chat`}>
                   <Card className="group hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-sm">
-                          <BarChart3 className="h-5 w-5 text-white" />
+                          <Bot className="h-5 w-5 text-white" />
                         </div>
                         <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
                       </div>
@@ -186,7 +182,6 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Empty state */}
         {!isLoading && datasets && datasets.length === 0 && (
           <p className="text-center text-sm text-gray-400 mt-4">
             No datasets yet. Upload one above to get started.

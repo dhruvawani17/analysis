@@ -24,6 +24,14 @@ import {
 import { ArrowLeft, Brain, Loader2, Trophy, BarChart3, Target, Hash, Sparkles, Wand2 } from "lucide-react";
 import { api } from "@/lib/api";
 
+function extractText(item: any): string {
+  if (typeof item === "string") return item;
+  if (item && typeof item === "object") {
+    return item.text || item.finding || item.prediction || item.recommendation || item.risk_factor || JSON.stringify(item);
+  }
+  return String(item);
+}
+
 export default function MLPage({
   params,
 }: {
@@ -288,78 +296,77 @@ export default function MLPage({
               </Card>
             )}
 
-            {/* Predictions */}
-            {result.predictions && (
-              <Card className="bg-white/80 border-indigo-100">
+            {/* LLM Analysis */}
+            {result.llm_analysis && result.llm_analysis.summary && (
+              <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <Target className="h-5 w-5 text-emerald-500" />
-                    Predictions & Analysis
+                    <Brain className="h-5 w-5 text-indigo-500" />
+                    AI Analysis
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {result.predictions.top_predictions && (
+                <CardContent className="space-y-5">
+                  <p className="text-sm leading-relaxed text-gray-700">{result.llm_analysis.summary}</p>
+
+                  {result.llm_analysis.key_findings?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Top Predicted Values</h4>
-                      <div className="space-y-2">
-                        {result.predictions.top_predictions.map((p: any, i: number) => (
-                          <div key={i} className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-gray-900 w-32 truncate">{p.value}</span>
-                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
-                                style={{ width: `${p.probability * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-gray-500 w-16 text-right">{(p.probability * 100).toFixed(1)}%</span>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Key Findings</h4>
+                      <div className="space-y-1.5">
+                        {result.llm_analysis.key_findings.map((f: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/60 border border-indigo-100">
+                            <span className="text-indigo-500 mt-0.5">•</span>
+                            <span className="text-sm text-gray-700">{extractText(f)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {result.predictions.conditional_predictions && (
+                  {result.llm_analysis.predictions?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        Predictions by {result.predictions.conditional_predictions.feature}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {Object.entries(result.predictions.conditional_predictions.predictions).map(([k, v]) => (
-                          <div key={k} className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100">
-                            <span className="text-xs text-gray-500">{k}</span>
-                            <p className="text-sm font-medium text-emerald-700">{v as string}</p>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Scenario Predictions</h4>
+                      <div className="space-y-1.5">
+                        {result.llm_analysis.predictions.map((p: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                            <Target className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                            <span className="text-sm text-gray-700">{extractText(p)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {result.predictions.statistics && (
+                  {result.llm_analysis.recommendations?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Target Statistics</h4>
-                      <div className="grid grid-cols-3 gap-2">
-                        {Object.entries(result.predictions.statistics).map(([k, v]) => (
-                          <div key={k} className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100 text-center">
-                            <p className="text-lg font-bold text-emerald-700">{v as number}</p>
-                            <p className="text-xs text-gray-500 capitalize">{k}</p>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Recommendations</h4>
+                      <div className="space-y-1.5">
+                        {result.llm_analysis.recommendations.map((r: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-violet-50/50 border border-violet-100">
+                            <Sparkles className="h-3.5 w-3.5 text-violet-500 mt-0.5 shrink-0" />
+                            <span className="text-sm text-gray-700">{extractText(r)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {result.predictions.correlated_feature && (
-                    <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-100">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">{result.predictions.correlated_feature.feature}</span>
-                        {" "}is {result.predictions.correlated_feature.trend} with {result.target_column}
-                        {" "}(r={result.predictions.correlated_feature.correlation})
-                      </p>
+                  {result.llm_analysis.risk_factors?.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Risk Factors</h4>
+                      <div className="space-y-1.5">
+                        {result.llm_analysis.risk_factors.map((r: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
+                            <span className="text-amber-500 mt-0.5">⚠</span>
+                            <span className="text-sm text-gray-700">{extractText(r)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
+)}
                 </CardContent>
               </Card>
             )}
+
           </>
         )}
       </main>
