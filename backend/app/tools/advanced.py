@@ -1037,6 +1037,72 @@ async def dashboard_tool(dataset_id: int, df: pd.DataFrame, params: dict = None)
                 "status": "improving" if trend["pct"] > 5 else ("declining" if trend["pct"] < -5 else "stable"),
             })
 
+    # ─── PERFORMANCE VS BENCHMARK ─────────────────────────────────────────
+    benchmarks = []
+    # Data quality benchmarks (industry standard thresholds)
+    benchmarks.append({
+        "metric": "Data Quality Score",
+        "value": dq_score,
+        "benchmark": 80,
+        "status": "above" if dq_score >= 80 else "below",
+        "note": "Healthy" if dq_score >= 80 else ("Needs improvement" if dq_score >= 60 else "Critical — clean before analysis")})
+    benchmarks.append({
+        "metric": "Completeness",
+        "value": completeness,
+        "benchmark": 95,
+        "status": "above" if completeness >= 95 else "below",
+        "note": "Excellent" if completeness >= 95 else ("Acceptable" if completeness >= 85 else "Poor — significant gaps")})
+    benchmarks.append({
+        "metric": "Uniqueness",
+        "value": uniqueness,
+        "benchmark": 98,
+        "status": "above" if uniqueness >= 98 else "below",
+        "note": "Clean" if uniqueness >= 98 else ("Minor duplication" if uniqueness >= 95 else "High duplication risk")})
+    benchmarks.append({
+        "metric": "Validity",
+        "value": validity,
+        "benchmark": 90,
+        "status": "above" if validity >= 90 else "below",
+        "note": "Reliable" if validity >= 90 else ("Some anomalies" if validity >= 80 else "Many outliers/invalid values")})
+    benchmarks.append({
+        "metric": "Consistency",
+        "value": consistency,
+        "benchmark": 90,
+        "status": "above" if consistency >= 90 else "below",
+        "note": "Uniform" if consistency >= 90 else ("Mixed" if consistency >= 75 else "Highly inconsistent categories")})
+    # ML benchmarks
+    if best_model and best_score:
+        sv = best_score * 100 if best_score <= 1 else best_score
+        ml_bench = 85 if sv <= 100 else 0.85
+        benchmarks.append({
+            "metric": f"ML Accuracy ({best_model})",
+            "value": sv,
+            "benchmark": ml_bench,
+            "status": "above" if sv >= ml_bench else "below",
+            "note": f"Production-ready" if sv >= 85 else ("Needs tuning" if sv >= 70 else "Underperforming — feature engineering needed")})
+    # Dataset size benchmark
+    size_benchmark = 10000
+    size_status = "above" if total_records >= size_benchmark else "below"
+    benchmarks.append({
+        "metric": "Dataset Size",
+        "value": total_records,
+        "benchmark": size_benchmark,
+        "status": size_status,
+        "note": f"Adequate for ML" if total_records >= size_benchmark else ("Marginal — consider collecting more" if total_records >= 1000 else "Too small for reliable ML")})
+    # Correlation density benchmark
+    if len(numeric_cols) >= 2:
+        try:
+            cdf = df[numeric_cols].dropna().corr()
+            strong_count = sum(1 for i in range(len(cdf.columns)) for j in range(i+1, len(cdf.columns)) if abs(cdf.iloc[i, j]) > 0.5)
+            corr_bench = 3
+            benchmarks.append({
+                "metric": "Feature Correlations",
+                "value": strong_count,
+                "benchmark": corr_bench,
+                "status": "above" if strong_count >= corr_bench else "below",
+                "note": f"{strong_count} strong relationships found" if strong_count > 0 else "No strong correlations — features are independent"})
+        except: pass
+
     # ─── ACTION ITEMS (prioritized, with impact + urgency) ────────────────
     action_items = []
     if duplicate_pct > 1:
@@ -1094,6 +1160,14 @@ async def dashboard_tool(dataset_id: int, df: pd.DataFrame, params: dict = None)
             "dates": len(date_cols), "missing_pct": missing_pct, "duplicate_pct": duplicate_pct,
             "data_quality_score": dq_score, "health_score": health_score,
         },
+        # Business Decision Support
+        "executive_summary": exec_summary,
+        "swot": swot,
+        "risks": risk_items,
+        "decisions": decisions,
+        "trends": trends,
+        "benchmarks": benchmarks,
+        "action_items": action_items,
     }
 
     return ToolResult(
@@ -1106,6 +1180,7 @@ async def dashboard_tool(dataset_id: int, df: pd.DataFrame, params: dict = None)
             f"Sections: {', '.join(s['title'] for s in all_sections)}",
             f"AI Detective found {len(detective_issues)} issues | AI generated {len(ai_insights)} insights | {len(recommendations)} recommendations",
             f"Story dashboard with {len(story_segments)} narrative segments",
+            f"Business support: Executive Summary, SWOT ({sum(len(v) for v in swot.values())} items), {len(risk_items)} risks, {len(decisions)} decisions, {len(trends)} trends, {len(benchmarks)} benchmarks, {len(action_items)} action items",
         ],
         why="Industry-grade executive dashboards consolidate all analytical perspectives — distributions, quality, correlations, ML, predictions, and narrative — into a single presentation-ready view",
         expected_impact="Eliminates ad-hoc analysis by providing a comprehensive, curated view of the entire dataset, reducing time-to-insight by 80%",

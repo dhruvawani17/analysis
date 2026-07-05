@@ -12,7 +12,8 @@ import {
   Lightbulb, Layers, Filter, ImageDown, FileText,
   Database, Table, Hash, List, CalendarDays, AlertTriangle, Copy,
   PieChart, Grid3X3, ScatterChart, CheckCircle2, Shield,
-  AlertCircle, Info, BookOpen, ListChecks,
+  AlertCircle, Info, BookOpen, ListChecks, FileSearch, ShieldAlert,
+  Crosshair, TrendingUp as TrendIcon, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -119,11 +120,11 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
     setExporting(fmt);
     try {
       const el = dashboardRef.current;
-      const rect = el.getBoundingClientRect();
-      const w = Math.ceil(rect.width);
-      const h = Math.ceil(el.scrollHeight);
 
       if (fmt === "pdf") {
+        const rect = el.getBoundingClientRect();
+        const w = Math.ceil(rect.width);
+        const h = Math.ceil(el.scrollHeight);
         const printWin = window.open("", "_blank", `width=${w},height=${h}`);
         if (!printWin) { alert("Please allow popups to export PDF"); return; }
         const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(s => s.outerHTML).join("\n");
@@ -132,63 +133,25 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
         printWin.focus();
         setTimeout(() => { printWin.print(); printWin.close(); }, 800);
       } else {
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("xmlns", svgNS);
-        svg.setAttribute("width", String(w));
-        svg.setAttribute("height", String(h));
-        const foreign = document.createElementNS(svgNS, "foreignObject");
-        foreign.setAttribute("x", "0"); foreign.setAttribute("y", "0");
-        foreign.setAttribute("width", "100%"); foreign.setAttribute("height", "100%");
-        const div = document.createElement("div");
-        div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-        div.style.width = w + "px";
-        div.innerHTML = el.outerHTML;
-        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(s => s.outerHTML).join("\n");
-        div.innerHTML = styles + el.outerHTML;
-        foreign.appendChild(div);
-        svg.appendChild(foreign);
-        const svgStr = new XMLSerializer().serializeToString(svg);
-        const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-        const url = URL.createObjectURL(svgBlob);
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = w * 2; canvas.height = h * 2;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.scale(2, 2);
-          ctx.drawImage(img, 0, 0);
-          URL.revokeObjectURL(url);
-          canvas.toBlob((blob) => {
-            if (!blob) return;
-            const a = document.createElement("a");
-            a.download = `dashboard-${datasetId}.png`;
-            a.href = URL.createObjectURL(blob);
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-          }, "image/png");
-        };
-        img.onerror = (e) => {
-          console.error("SVG render failed", e);
-          URL.revokeObjectURL(url);
-          try {
-            const html2canvas = (window as any).__html2canvas;
-            if (html2canvas) {
-              html2canvas(el, { scale: 2, backgroundColor: "#ffffff" }).then((canvas: HTMLCanvasElement) => {
-                canvas.toBlob((blob) => { if (blob) { const a = document.createElement("a"); a.download = `dashboard-${datasetId}.png`; a.href = URL.createObjectURL(blob); a.click(); } }, "image/png");
-              });
+        const domToImage = (await import("dom-to-image-more")).default;
+        const dataUrl = await domToImage.toPng(el, {
+          pixelRatio: 2,
+          filter: (node: Node) => {
+            if (node instanceof HTMLElement) {
+              if (node.classList.contains("print:hidden")) return false;
+              if (node.tagName === "BUTTON") return false;
             }
-          } catch (e2) { console.error("Fallback also failed", e2); }
-          alert("PNG export failed. Try the PDF export instead (uses browser print).");
-        };
-        img.src = url;
+            return true;
+          },
+        });
+        const link = document.createElement("a");
+        link.download = `dashboard-${datasetId}.png`;
+        link.href = dataUrl;
+        link.click();
       }
     } catch (err) {
       console.error("Export failed:", err);
-      alert("Export failed. Check console for details.");
+      alert("PNG export failed. Try the PDF export instead.");
     } finally {
       setTimeout(() => setExporting("none"), 2000);
     }
@@ -452,6 +415,235 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
                       <p className="text-[11px] text-slate-600 leading-relaxed">{seg.narrative}</p>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {config.executive_summary && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <FileSearch className="h-4 w-4 text-blue-600" />
+                  <h2 className="text-sm font-semibold text-slate-800">Executive Summary</h2>
+                </div>
+                <div className="p-4">
+                  <p className="text-[12px] text-slate-700 leading-relaxed">{config.executive_summary}</p>
+                </div>
+              </div>
+            )}
+
+            {config.swot && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <Crosshair className="h-4 w-4 text-violet-500" />
+                  <h2 className="text-sm font-semibold text-slate-800">SWOT Analysis</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+                  {([
+                    { key: "strengths", label: "Strengths", color: "emerald", icon: "✓" },
+                    { key: "weaknesses", label: "Weaknesses", color: "red", icon: "✗" },
+                    { key: "opportunities", label: "Opportunities", color: "blue", icon: "→" },
+                    { key: "threats", label: "Threats", color: "amber", icon: "⚠" },
+                  ] as const).map(({ key, label, color, icon }) => {
+                    const items = config.swot![key];
+                    const colorMap: Record<string, { bg: string; border: string; text: string; header: string }> = {
+                      emerald: { bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-800", header: "text-emerald-700" },
+                      red: { bg: "bg-red-50", border: "border-red-100", text: "text-red-800", header: "text-red-700" },
+                      blue: { bg: "bg-blue-50", border: "border-blue-100", text: "text-blue-800", header: "text-blue-700" },
+                      amber: { bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-800", header: "text-amber-700" },
+                    };
+                    const c = colorMap[color];
+                    return (
+                      <div key={key} className={`rounded-lg border ${c.border} ${c.bg} p-3`}>
+                        <p className={`text-[11px] font-bold ${c.header} mb-1.5 uppercase tracking-wider`}>{label}</p>
+                        {items.length > 0 ? (
+                          <ul className="space-y-1">
+                            {items.map((item, j) => (
+                              <li key={j} className={`text-[10px] ${c.text} leading-relaxed flex items-start gap-1`}>
+                                <span className="font-bold mt-px shrink-0">{icon}</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className={`text-[10px] ${c.text} italic opacity-60`}>No {key} identified</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {config.risks && config.risks.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <ShieldAlert className="h-4 w-4 text-red-500" />
+                  <h2 className="text-sm font-semibold text-slate-800">Risk Assessment</h2>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-red-200 text-red-600 bg-red-50 font-medium ml-1">{config.risks.length} risks</Badge>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {config.risks.map((risk, i) => {
+                    const urgencyColors: Record<string, { bg: string; text: string }> = {
+                      immediate: { bg: "bg-red-100", text: "text-red-700" },
+                      high: { bg: "bg-orange-100", text: "text-orange-700" },
+                      medium: { bg: "bg-amber-100", text: "text-amber-700" },
+                      low: { bg: "bg-emerald-100", text: "text-emerald-700" },
+                    };
+                    const uc = urgencyColors[risk.urgency] || urgencyColors.medium;
+                    return (
+                      <div key={i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[11px] font-semibold text-slate-800">{risk.risk}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{risk.mitigation}</p>
+                          </div>
+                          <div className="shrink-0 flex items-center gap-1.5">
+                            <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${uc.bg} ${uc.text}`}>{risk.urgency}</span>
+                            <span className="text-[9px] font-mono font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{risk.score}/9</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {config.decisions && config.decisions.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <Crosshair className="h-4 w-4 text-indigo-500" />
+                  <h2 className="text-sm font-semibold text-slate-800">Decision Points</h2>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-indigo-200 text-indigo-600 bg-indigo-50 font-medium ml-1">{config.decisions.length} questions</Badge>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {config.decisions.map((d, i) => {
+                    const recColor = d.recommendation.startsWith("yes") ? "text-emerald-700" : d.recommendation.startsWith("no") ? "text-red-700" : "text-amber-700";
+                    const confColors: Record<string, string> = {
+                      high: "bg-emerald-100 text-emerald-700",
+                      medium: "bg-amber-100 text-amber-700",
+                      low: "bg-red-100 text-red-700",
+                    };
+                    return (
+                      <div key={i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
+                        <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{d.question}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[10px] font-medium ${recColor}`}>{d.recommendation}</span>
+                          <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${confColors[d.confidence] || confColors.medium}`}>{d.confidence} confidence</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">{d.rationale}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {config.trends && config.trends.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <TrendIcon className="h-4 w-4 text-cyan-500" />
+                  <h2 className="text-sm font-semibold text-slate-800">Trend Analysis</h2>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-cyan-200 text-cyan-600 bg-cyan-50 font-medium ml-1">{config.trends.length} metrics</Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
+                  {config.trends.map((t, i) => {
+                    const dirColor = t.direction === "up" ? "text-emerald-600" : t.direction === "down" ? "text-red-600" : "text-slate-500";
+                    const statusBg = t.status === "improving" ? "bg-emerald-50" : t.status === "declining" ? "bg-red-50" : "bg-slate-50";
+                    return (
+                      <div key={i} className={`rounded-lg border border-slate-100 ${statusBg} p-2.5`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-semibold text-slate-700">{t.metric}</span>
+                          <span className={`text-[9px] font-medium ${dirColor}`}>
+                            {t.direction === "up" ? "↗" : t.direction === "down" ? "↘" : "→"} {t.change_pct > 0 ? "+" : ""}{t.change_pct.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[9px] text-slate-500">
+                          <span>Current: <b className="text-slate-700">{t.current}</b></span>
+                          <span>Avg: <b className="text-slate-700">{t.average}</b></span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {config.benchmarks && config.benchmarks.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <Target className="h-4 w-4 text-emerald-500" />
+                  <h2 className="text-sm font-semibold text-slate-800">Performance vs Benchmark</h2>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-emerald-200 text-emerald-600 bg-emerald-50 font-medium ml-1">{config.benchmarks.length} metrics</Badge>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {config.benchmarks.map((b, i) => {
+                    const isAbove = b.status === "above";
+                    const pct = b.benchmark > 0 ? Math.min(100, (b.value / b.benchmark) * 100) : 0;
+                    return (
+                      <div key={i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-semibold text-slate-700">{b.metric}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-500">Target: <b className="text-slate-700">{b.benchmark.toLocaleString()}</b></span>
+                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${isAbove ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                              {isAbove ? "✓ Above" : "↓ Below"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-700 ${isAbove ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-amber-400 to-amber-500"}`}
+                              style={{ width: `${Math.max(pct, 3)}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] font-mono font-semibold text-slate-600 w-12 text-right">{typeof b.value === "number" ? b.value.toLocaleString() : b.value}</span>
+                        </div>
+                        <p className="text-[9px] text-slate-500 italic">{b.note}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {config.action_items && config.action_items.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
+                  <ClipboardList className="h-4 w-4 text-orange-500" />
+                  <h2 className="text-sm font-semibold text-slate-800">Action Items</h2>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-orange-200 text-orange-600 bg-orange-50 font-medium ml-1">{config.action_items.length} items</Badge>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {config.action_items.map((item, i) => {
+                    const impactColors: Record<string, string> = {
+                      high: "bg-emerald-100 text-emerald-700",
+                      medium: "bg-amber-100 text-amber-700",
+                      low: "bg-blue-100 text-blue-700",
+                    };
+                    const urgencyColors: Record<string, string> = {
+                      immediate: "bg-red-100 text-red-700",
+                      high: "bg-orange-100 text-orange-700",
+                      medium: "bg-amber-100 text-amber-700",
+                      low: "bg-slate-100 text-slate-600",
+                    };
+                    return (
+                      <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition-colors">
+                        <span className="text-[10px] font-mono font-bold text-slate-400 w-5">{item.priority}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[11px] font-medium text-slate-800">{item.action}</span>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-1">
+                          <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${impactColors[item.impact] || impactColors.low}`}>{item.impact}</span>
+                          <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${urgencyColors[item.urgency] || urgencyColors.low}`}>{item.urgency}</span>
+                          <span className="text-[8px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded">{item.category}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

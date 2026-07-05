@@ -261,4 +261,50 @@ export interface DashboardConfig {
     data_quality_score?: number;
     health_score?: number;
   };
+  executive_summary?: string;
+  swot?: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+  };
+  risks?: Array<{
+    risk: string;
+    likelihood: string;
+    impact: string;
+    score: number;
+    mitigation: string;
+    urgency: string;
+  }>;
+  decisions?: Array<{
+    question: string;
+    recommendation: string;
+    rationale: string;
+    confidence: string;
+  }>;
+  trends?: Array<{
+    metric: string;
+    direction: string;
+    change_pct: number;
+    label: string;
+    current: string;
+    average: string;
+    min: string;
+    max: string;
+    status: string;
+  }>;
+  benchmarks?: Array<{
+    metric: string;
+    value: number;
+    benchmark: number;
+    status: "above" | "below";
+    note: string;
+  }>;
+  action_items?: Array<{
+    action: string;
+    priority: number;
+    impact: string;
+    urgency: string;
+    category: string;
+  }>;
 }
