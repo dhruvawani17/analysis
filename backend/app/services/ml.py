@@ -35,6 +35,16 @@ def _parse_llm_json(text: str) -> dict:
     except (ValueError, json.JSONDecodeError):
         pass
 
+    # Fix literal newlines inside JSON strings
+    try:
+        # Replace literal newlines (not \n) inside string values
+        fixed = re.sub(r'(?<=": ")([^"]*\n[^"]*)', lambda m: m.group(0).replace('\n', '\\n'), cleaned)
+        fixed = re.sub(r',\s*}', '}', fixed)
+        fixed = re.sub(r',\s*]', ']', fixed)
+        return json.loads(fixed)
+    except json.JSONDecodeError:
+        pass
+
     try:
         cleaned = re.sub(r',\s*}', '}', cleaned)
         cleaned = re.sub(r',\s*]', ']', cleaned)

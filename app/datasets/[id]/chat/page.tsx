@@ -28,14 +28,17 @@ import {
   BarChart3,
   Brain,
   Wand2,
-  FileText,
-  LayoutDashboard,
   TrendingUp,
   TrendingDown,
+  FileText,
   Lightbulb,
-  AlertTriangle,
+  LayoutDashboard,
   Target,
   Shield,
+  GitBranch,
+  Globe,
+  Bell,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -583,6 +586,224 @@ function renderReportInline(data: Record<string, any>) {
   );
 }
 
+function renderGoalInline(data: Record<string, any>) {
+  const goal = data.goal || "";
+  const problemType = data.problem_type || "";
+  const targetColumn = data.target_column || "";
+  const suggestedModels = data.suggested_models || [];
+  const suggestedMetrics = data.suggested_metrics || [];
+
+  return (
+    <div className="mt-3 space-y-2">
+      <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+        <CardContent className="p-3">
+          <p className="text-sm font-semibold text-emerald-800">Detected Goal: {goal}</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge className="text-[10px] bg-emerald-100 text-emerald-700">{problemType}</Badge>
+            {targetColumn && <Badge className="text-[10px] bg-blue-100 text-blue-700">Target: {targetColumn}</Badge>}
+          </div>
+          {suggestedModels.length > 0 && (
+            <p className="text-[11px] text-gray-600 mt-1">Models: {suggestedModels.join(", ")}</p>
+          )}
+          {suggestedMetrics.length > 0 && (
+            <p className="text-[11px] text-gray-600">Metrics: {suggestedMetrics.join(", ")}</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function renderConfidenceInline(data: Record<string, any>) {
+  const issues = data.issues || [];
+  const critical = issues.filter((i: any) => i.severity === "critical");
+  const warnings = issues.filter((i: any) => i.severity === "warning");
+
+  return (
+    <div className="mt-3 space-y-2">
+      {critical.length > 0 && (
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-red-700 mb-1">🔴 Critical ({critical.length})</p>
+            {critical.map((i: any, idx: number) => (
+              <p key={idx} className="text-[11px] text-red-600 ml-2">• {i.message}</p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+      {warnings.length > 0 && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-amber-700 mb-1">🟡 Warnings ({warnings.length})</p>
+            {warnings.map((i: any, idx: number) => (
+              <p key={idx} className="text-[11px] text-amber-600 ml-2">• {i.message}</p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+      {critical.length === 0 && warnings.length === 0 && (
+        <Card className="bg-emerald-50 border-emerald-200">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-emerald-700">✅ All checks passed — ready for modeling</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function renderPlaygroundInline(data: Record<string, any>) {
+  const models = data.models || [];
+  const best = data.best_model || "";
+  const problemType = data.problem_type || "";
+
+  return (
+    <div className="mt-3 space-y-2">
+      {models.length > 0 && (
+        <div className="space-y-1">
+          {models.map((m: any, idx: number) => (
+            <Card key={idx} className={`${m.name === best ? "bg-gradient-to-r from-violet-50 to-purple-50 border-violet-300" : "bg-white border-gray-100"}`}>
+              <CardContent className="p-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-xs">{m.name}</p>
+                    {m.name === best && <Badge className="text-[10px] bg-violet-100 text-violet-700">Best</Badge>}
+                  </div>
+                  <p className="text-xs font-mono font-bold">{problemType === "classification" ? (m.test_score * 100).toFixed(1) + "%" : m.test_score.toFixed(4)}</p>
+                </div>
+                <div className="flex gap-3 mt-1 text-[10px] text-gray-500">
+                  {m.training_time > 0 && <span>⏱ {m.training_time}s</span>}
+                  {m.inference_speed > 0 && <span>⚡ {m.inference_speed.toLocaleString()} pred/s</span>}
+                  {m.model_size_kb > 0 && <span>💾 {m.model_size_kb}KB</span>}
+                  {m.explainability > 0 && <span>🔍 {m.explainability}/10</span>}
+                </div>
+                {m.feature_importance && Object.keys(m.feature_importance).length > 0 && (
+                  <div className="flex gap-2 mt-1">
+                    {Object.entries(m.feature_importance).slice(0, 3).map(([f, v]: [string, any]) => (
+                      <Badge key={f} className="text-[9px] bg-gray-100 text-gray-600">{f}: {(v as number).toFixed(2)}</Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function renderSimulationInline(data: Record<string, any>) {
+  const pctImpact = data.percentage_impact || 0;
+  const direction = data.direction || "neutral";
+  const baseline = data.baseline_mean || 0;
+  const scenario = data.scenario_mean || 0;
+  const targetCol = data.target_column || "";
+  const analysis = data.analysis || "";
+  const changesApplied = data.changes_applied || [];
+
+  return (
+    <div className="mt-3 space-y-2">
+      <Card className={`${direction === "increase" ? "bg-emerald-50 border-emerald-200" : direction === "decrease" ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"}`}>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg">{direction === "increase" ? "📈" : direction === "decrease" ? "📉" : "➡️"}</span>
+            <span className="text-lg font-bold">{pctImpact > 0 ? "+" : ""}{pctImpact}%</span>
+            <span className="text-xs text-gray-600">impact on {targetCol}</span>
+          </div>
+          <div className="text-xs text-gray-600">
+            Baseline: {baseline.toFixed(2)} → Scenario: {scenario.toFixed(2)}
+          </div>
+          {changesApplied.length > 0 && (
+            <div className="mt-2">
+              <p className="text-[11px] font-semibold text-gray-700">Changes:</p>
+              {changesApplied.map((c: any, idx: number) => (
+                <p key={idx} className="text-[10px] text-gray-500 ml-2">• {c.column}: {c.original_mean} → {c.new_mean} ({(c.change_pct >= 0 ? "+" : "")}{c.change_pct}%)</p>
+              ))}
+            </div>
+          )}
+          {analysis && (
+            <div className="mt-2 p-2 bg-white/70 rounded text-[11px] text-gray-700">{analysis}</div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function renderLineageInline(data: Record<string, any>) {
+  const lineage = data.lineage || [];
+
+  return (
+    <div className="mt-3">
+      <Card className="bg-white border-indigo-100">
+        <CardContent className="p-3">
+          <div className="space-y-0">
+            {lineage.map((step: any, idx: number) => (
+              <div key={idx} className="flex items-start gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={`w-3 h-3 rounded-full ${step.is_current ? "bg-indigo-500 ring-2 ring-indigo-200" : "bg-gray-300"}`} />
+                  {idx < lineage.length - 1 && <div className="w-0.5 h-8 bg-gray-200" />}
+                </div>
+                <div className={`pb-4 ${step.is_current ? "font-semibold" : ""}`}>
+                  <p className="text-xs text-gray-800">{step.label}</p>
+                  <p className="text-[10px] text-gray-500">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function renderMarketplaceInline(data: Record<string, any>) {
+  const datasets = data.datasets || [];
+
+  return (
+    <div className="mt-3 space-y-2">
+      {datasets.map((ds: any, idx: number) => (
+        <Card key={idx} className="bg-white border-indigo-100">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-gray-800">{ds.name}</p>
+              <Badge className="text-[10px] bg-indigo-100 text-indigo-700">{ds.relevance_score}/10</Badge>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-0.5">{ds.description}</p>
+            <div className="flex gap-2 mt-1">
+              <Badge className="text-[9px] bg-gray-100 text-gray-600">{ds.source}</Badge>
+              <Badge className="text-[9px] bg-gray-100 text-gray-600">{ds.suggested_join}</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function renderAlertingInline(data: Record<string, any>) {
+  const alerts = data.alerts || [];
+
+  return (
+    <div className="mt-3 space-y-1">
+      {alerts.map((a: any, idx: number) => (
+        <Card key={idx} className={`${a.severity === "critical" ? "bg-red-50 border-red-200" : a.severity === "warning" ? "bg-amber-50 border-amber-200" : a.severity === "success" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"}`}>
+          <CardContent className="p-2.5">
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5">{a.severity === "critical" ? "🔴" : a.severity === "warning" ? "🟡" : a.severity === "success" ? "✅" : "ℹ️"}</span>
+              <div>
+                <p className="text-xs font-semibold text-gray-800">{a.title}</p>
+                <p className="text-[10px] text-gray-500">{a.message}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Main Tool Result Renderer ─── */
 function ToolResultCard({ result }: { result: ToolResult }) {
   const statusIcon = result.status === "success" ? (
@@ -596,6 +817,9 @@ function ToolResultCard({ result }: { result: ToolResult }) {
     story: FileText, timeseries: TrendingUp, business: Lightbulb,
     summary: Sparkles, notebook: FileText, deploy: Play, edit: Wand2,
     qa: BarChart3, optimizer: Brain, report: FileText, workflow: Play,
+    goal: Target, confidence: Shield, playground: Brain,
+    simulation: TrendingUp, lineage: GitBranch, marketplace: Globe,
+    alerting: Bell,
   };
   const ToolIcon = toolIcons[result.tool] || Brain;
 
@@ -608,6 +832,13 @@ function ToolResultCard({ result }: { result: ToolResult }) {
     timeseries: "from-amber-50 to-orange-50 border-amber-200",
     business: "from-emerald-50 to-teal-50 border-emerald-200",
     summary: "from-indigo-50 to-violet-50 border-indigo-200",
+    goal: "from-emerald-50 to-teal-50 border-emerald-200",
+    confidence: "from-amber-50 to-orange-50 border-amber-200",
+    playground: "from-violet-50 to-purple-50 border-violet-200",
+    simulation: "from-blue-50 to-cyan-50 border-blue-200",
+    lineage: "from-indigo-50 to-blue-50 border-indigo-200",
+    marketplace: "from-emerald-50 to-teal-50 border-emerald-200",
+    alerting: "from-red-50 to-rose-50 border-red-200",
   };
 
   const bg = toolColors[result.tool] || "from-indigo-50/50 to-violet-50/50 border-indigo-100";
@@ -637,6 +868,13 @@ function ToolResultCard({ result }: { result: ToolResult }) {
       {result.tool === "timeseries" && result.data && renderTimeseriesInline(result.data)}
       {result.tool === "report" && result.data && renderReportInline(result.data)}
       {["notebook", "deploy"].includes(result.tool) && result.data && renderCodeInline(result.data, result.tool)}
+      {result.tool === "goal" && result.data && renderGoalInline(result.data)}
+      {result.tool === "confidence" && result.data && renderConfidenceInline(result.data)}
+      {result.tool === "playground" && result.data && renderPlaygroundInline(result.data)}
+      {result.tool === "simulation" && result.data && renderSimulationInline(result.data)}
+      {result.tool === "lineage" && result.data && renderLineageInline(result.data)}
+      {result.tool === "marketplace" && result.data && renderMarketplaceInline(result.data)}
+      {result.tool === "alerting" && result.data && renderAlertingInline(result.data)}
 
       {/* Summary + explanation */}
       <Card className={`mt-2 bg-gradient-to-r ${bg}`}>
@@ -910,8 +1148,8 @@ function getWelcomeMessage(ctx: CopilotContext): string {
 }
 
 function getSuggestions(ctx: CopilotContext): string[] {
-  if (!ctx.cleaned) return ["Analyze my data", "Clean the data", "What issues exist?", "Help"];
-  if (!ctx.eda_completed) return ["Run EDA", "Explore correlations", "Show distributions", "Train a model"];
-  if (!ctx.ml_completed) return ["Train ML models", "What's the best algorithm?", "Generate dashboard", "Create report"];
-  return ["Generate dashboard", "Deploy model", "Create story", "What insights?"];
+  if (!ctx.cleaned) return ["Analyze my data", "Clean the data", "What issues exist?", "Goal detection", "Confidence check"];
+  if (!ctx.eda_completed) return ["Run EDA", "Explore correlations", "Show distributions", "Train a model", "Goal detection"];
+  if (!ctx.ml_completed) return ["Train ML models", "Model Playground", "What's the best algorithm?", "Generate dashboard", "Confidence check"];
+  return ["Generate dashboard", "Deploy model", "Create story", "What insights?", "Model Playground", "What-if simulation"];
 }

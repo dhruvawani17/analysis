@@ -84,12 +84,18 @@ class CopilotBrain:
         }
 
     async def _classify_intent(self, message: str, ctx: DatasetContext) -> dict:
+        # Pre-classifier: catch "I want to predict" patterns before LLM
+        lower_pre = message.lower().strip()
+        if any(w in lower_pre for w in ["i want to predict", "i would like to predict", "my goal is", "help me predict", "i aim to"]):
+            return {"action": "invoke_tool", "tool": "goal", "params": {"message": message}}
+
         llm = get_llm_provider()
 
         tools_list = [
             "cleaning", "eda", "summary", "qa", "business", "story",
             "dashboard", "timeseries", "ml", "optimizer", "notebook",
             "deploy", "edit", "report", "workflow",
+            "goal", "confidence", "playground", "simulation", "lineage", "marketplace",
         ]
 
         context_str = f"Dataset: {ctx.dataset_name}, Cleaned: {ctx.cleaned}, EDA: {ctx.eda_completed}, ML: {ctx.ml_completed}"
@@ -100,6 +106,24 @@ User message: "{message}"
 
 Available tools: {', '.join(tools_list)}
 
+IMPORTANT: Distinguish between:
+- ACTION requests (user wants to DO something with tools): "clean my data", "train a model", "run EDA", "generate dashboard"
+- ANALYTICAL questions (user wants to UNDERSTAND or get advice about the data): "what price should I set", "what features matter", "suggest recommendations based on data"
+- PLAN requests (user wants a full analysis plan): "analyze my data completely", "what should I do with this data"
+- GOAL requests (user states their objective): "I want to predict...", "help me forecast..." — use the "goal" tool
+
+For analytical questions and advice-seeking, use "chat" — the system will provide data context so you can answer intelligently.
+
+New specialized tools:
+- "goal": User says things like "I want to predict...", "help me forecast...", "what model should I use" — use this for goal/intent detection, NOT the "ml" tool
+- "ml": ONLY when user explicitly says "train a model", "run ML", "train now"
+- "confidence": User says "check my data quality", "is my data ready for ML", "validate my dataset"
+- "playground": User says "compare models", "which algorithm is best", "model playground"
+- "simulation": User says "what if", "simulate", "scenario analysis"
+- "lineage": User says "show what was done to my data", "data history"
+- "marketplace": User says "find more data", "suggest datasets", "enrich my data"
+- "alerting": User says "show insights", "what's changed", "alerts"
+
 Return JSON with:
 - "action": one of "invoke_tool", "plan", "run_all", "chat"
 - "tool": tool name if action is "invoke_tool" (or null)
@@ -109,8 +133,15 @@ Examples:
 - "clean my data" -> {{"action": "invoke_tool", "tool": "cleaning", "params": {{}}}}
 - "analyze my data" -> {{"action": "plan"}}
 - "run everything" -> {{"action": "run_all"}}
-- "what is the average age?" -> {{"action": "invoke_tool", "tool": "qa", "params": {{"question": "what is the average age?"}}}}
-- "train a model to predict price" -> {{"action": "invoke_tool", "tool": "ml", "params": {{"target_column": "price"}}}}
+- "what is the average age?" -> {{"action": "chat"}}
+- "train a model now" -> {{"action": "invoke_tool", "tool": "ml", "params": {{}}}}
+- "train a model to predict price" -> {{"action": "invoke_tool", "tool": "goal", "params": {{"message": "train a model to predict price"}}}}
+- "I want to predict customer churn" -> {{"action": "invoke_tool", "tool": "goal", "params": {{"message": "I want to predict customer churn"}}}}
+- "check if my data is ready" -> {{"action": "invoke_tool", "tool": "confidence", "params": {{}}}}
+- "compare different models" -> {{"action": "invoke_tool", "tool": "playground", "params": {{}}}}
+- "what if marketing spend increases" -> {{"action": "invoke_tool", "tool": "simulation", "params": {{"scenario": "what if marketing spend increases"}}}}
+- "show what was done" -> {{"action": "invoke_tool", "tool": "lineage", "params": {{}}}}
+- "suggest datasets to enrich" -> {{"action": "invoke_tool", "tool": "marketplace", "params": {{}}}}
 - "generate a dashboard" -> {{"action": "invoke_tool", "tool": "dashboard", "params": {{}}}}
 - "hello" -> {{"action": "chat"}}
 
@@ -130,32 +161,65 @@ Return ONLY valid JSON."""
             pass
 
         lower = message.lower().strip()
-        if any(w in lower for w in ["clean", "fix", "missing", "duplicates"]):
-            return {"action": "invoke_tool", "tool": "cleaning", "params": {}}
+        if any(w in lower for w in ["run all", "run everything", "do everything"]):
+            return {"action": "run_all"}
+        if "plan" in lower and any(w in lower for w in ["create", "make", "generate", "build"]):
+            return {"action": "plan"}
+        if any(w in lower for w in ["goal", "objective", "what should i do", "help me with"]):
+            return {"action": "invoke_tool", "tool": "goal", "params": {"message": message}}
+        if any(w in lower for w in ["confidence", "check my data", "is my data ready"]):
+            return {"action": "invoke_tool", "tool": "confidence", "params": {}}
+        # Lineage before timeseries (timeline conflict)
+        if any(w in lower for w in ["lineage", "data lineage", "what was done", "rollback", "show history"]):
+            return {"action": "invoke_tool", "tool": "lineage", "params": {}}
+        if any(w in lower for w in ["marketplace", "enrich", "external data", "more data", "suggest dataset"]):
+            return {"action": "invoke_tool", "tool": "marketplace", "params": {}}
+        # Prediction intent detection before ml
+        if any(w in lower for w in ["i want to predict", "i would like to predict", "my goal is", "help me predict"]):
+            return {"action": "invoke_tool", "tool": "goal", "params": {"message": message}}
+        if any(w in lower for w in ["simulate", "what if", "what-if", "scenario", "impact of"]):
+            return {"action": "invoke_tool", "tool": "simulation", "params": {"scenario": message}}
+        if any(w in lower for w in ["alert", "insight", "notification", "proactive"]):
+            return {"action": "invoke_tool", "tool": "alerting", "params": {}}
+        if any(w in lower for w in ["playground", "compare models", "compare algorithms", "which model"]):
+            return {"action": "invoke_tool", "tool": "playground", "params": {}}
+        if any(w in lower for w in ["notebook", "jupyter"]):
+            return {"action": "invoke_tool", "tool": "notebook", "params": {}}
+        if any(w in lower for w in ["deploy", "export", "api", "docker"]):
+            return {"action": "invoke_tool", "tool": "deploy", "params": {}}
+        if any(w in lower for w in ["report", "pdf", "download report"]):
+            return {"action": "invoke_tool", "tool": "report", "params": {}}
+        if any(w in lower for w in ["dashboard", "kpi", "monitor"]):
+            return {"action": "invoke_tool", "tool": "dashboard", "params": {}}
+        if any(w in lower for w in ["story", "narrative"]):
+            return {"action": "invoke_tool", "tool": "story", "params": {}}
+        if any(w in lower for w in ["business", "insights", "risks", "opportunities"]):
+            return {"action": "invoke_tool", "tool": "business", "params": {}}
+        if any(w in lower for w in ["timeseries", "forecast", "time series", "trend"]):
+            return {"action": "invoke_tool", "tool": "timeseries", "params": {}}
         if any(w in lower for w in ["eda", "explore", "statistics", "stats", "analyze"]):
             if "analyze" in lower and "data" in lower:
                 return {"action": "plan"}
             return {"action": "invoke_tool", "tool": "eda", "params": {}}
         if any(w in lower for w in ["summary", "summarize", "overview"]):
             return {"action": "invoke_tool", "tool": "summary", "params": {}}
-        if any(w in lower for w in ["dashboard", "kpi", "monitor"]):
-            return {"action": "invoke_tool", "tool": "dashboard", "params": {}}
         if any(w in lower for w in ["train", "model", "ml", "predict"]):
             return {"action": "invoke_tool", "tool": "ml", "params": {}}
-        if any(w in lower for w in ["business", "insights", "risks", "opportunities"]):
-            return {"action": "invoke_tool", "tool": "business", "params": {}}
-        if any(w in lower for w in ["story", "narrative", "report"]):
-            return {"action": "invoke_tool", "tool": "story", "params": {}}
-        if any(w in lower for w in ["forecast", "time", "trend", "timeseries"]):
-            return {"action": "invoke_tool", "tool": "timeseries", "params": {}}
-        if any(w in lower for w in ["notebook", "jupyter"]):
-            return {"action": "invoke_tool", "tool": "notebook", "params": {}}
-        if any(w in lower for w in ["deploy", "export", "api", "docker"]):
-            return {"action": "invoke_tool", "tool": "deploy", "params": {}}
-        if any(w in lower for w in ["plan", "what should"]):
-            return {"action": "plan"}
-        if any(w in lower for w in ["run all", "run everything", "do everything"]):
-            return {"action": "run_all"}
+        if any(w in lower for w in ["clean", "fix", "missing", "duplicates"]):
+            return {"action": "invoke_tool", "tool": "cleaning", "params": {}}
+
+        # Data questions: price, feature, suggestion, recommend, best, compare, etc.
+        data_keywords = [
+            "price", "feature", "suggest", "recommend", "best", "compare",
+            "how many", "what is", "what are", "which", "average", "median",
+            "distribution", "pattern", "trend", "correlation", "relationship",
+            "expensive", "cheap", "affordable", "budget", "premium",
+            "popular", "common", "frequent", "top", "lowest", "highest",
+            "should i", "could you", "tell me", "explain", "describe",
+            "分析", "分析一下",
+        ]
+        if any(w in lower for w in data_keywords):
+            return {"action": "chat"}
 
         return {"action": "chat"}
 
@@ -182,6 +246,13 @@ Return ONLY valid JSON."""
         from app.tools.preprocessing import cleaning_tool, eda_tool, summary_tool
         from app.tools.analysis import business_tool, story_tool, notebook_tool
         from app.tools.advanced import dashboard_tool, timeseries_tool, edit_tool, deploy_tool
+        from app.tools.goal_tool import goal_detection_tool
+        from app.tools.confidence_tool import confidence_checker_tool
+        from app.tools.playground_tool import playground_tool
+        from app.tools.simulation_tool import simulation_tool
+        from app.tools.lineage_tool import lineage_tool
+        from app.tools.marketplace_tool import marketplace_tool
+        from app.tools.alerting_tool import alerting_tool
 
         async def ml_tool(dataset_id, df, params):
             from app.copilot.tools import ToolResult as TR
@@ -321,6 +392,13 @@ Return ONLY valid JSON."""
             "timeseries": timeseries_tool,
             "edit": edit_tool,
             "deploy": deploy_tool,
+            "goal": goal_detection_tool,
+            "confidence": confidence_checker_tool,
+            "playground": playground_tool,
+            "simulation": simulation_tool,
+            "lineage": lineage_tool,
+            "marketplace": marketplace_tool,
+            "alerting": alerting_tool,
         }
 
         tool_fn = tool_map.get(tool_name)
@@ -486,9 +564,52 @@ Return ONLY valid JSON."""
         if ctx.key_metrics:
             context_parts.append(f"Key metrics: {json.dumps(ctx.key_metrics)}")
 
+        # Enrich with actual data stats so LLM can answer data questions
+        try:
+            import pandas as pd
+            from app.db.models import Dataset
+            from app.core.storage import load_dataframe
+            dataset = await self.db.get(Dataset, int(ctx.dataset_id) if ctx.dataset_id else 0)
+            if dataset:
+                df = load_dataframe(dataset.cleaned_file_path or dataset.file_path)
+                context_parts.append(f"\nColumn names: {list(df.columns)}")
+
+                # Numeric stats
+                num_df = df.select_dtypes(include=["number"])
+                if not num_df.empty:
+                    stats = num_df.describe().round(2).to_string()
+                    context_parts.append(f"\nNumeric column statistics:\n{stats}")
+
+                # Categorical value counts (top values)
+                cat_df = df.select_dtypes(exclude=["number"])
+                for col in cat_df.columns[:5]:
+                    vc = df[col].value_counts().head(5)
+                    vals = ", ".join([f"{v} ({c})" for v, c in vc.items()])
+                    context_parts.append(f"\n{col} top values: {vals}")
+
+                # Price-like columns special handling
+                price_cols = [c for c in df.columns if any(w in c.lower() for w in ["price", "cost", "amount", "revenue", "salary", "sale"])]
+                if price_cols:
+                    for pc in price_cols[:3]:
+                        if pc in df.columns and pd.api.types.is_numeric_dtype(df[pc]):
+                            s = df[pc].dropna()
+                            context_parts.append(
+                                f"\n{pc} distribution: min={s.min():.0f}, "
+                                f"25th={s.quantile(0.25):.0f}, median={s.median():.0f}, "
+                                f"75th={s.quantile(0.75):.0f}, max={s.max():.0f}, mean={s.mean():.0f}"
+                            )
+
+                # Feature importance hints
+                if not num_df.empty:
+                    context_parts.append(f"\nNumeric features: {list(num_df.columns)}")
+                if not cat_df.empty:
+                    context_parts.append(f"\nCategorical features: {list(cat_df.columns)}")
+        except Exception:
+            pass
+
         context_str = "\n".join(context_parts)
 
-        prompt = f"""You are an AI data analyst copilot. You help users analyze their data.
+        prompt = f"""You are an expert AI data analyst copilot. You help users analyze their data and answer questions about it.
 
 ## Current Dataset Context
 {context_str}
@@ -496,13 +617,18 @@ Return ONLY valid JSON."""
 ## User Message
 {message}
 
-Respond helpfully. If the user wants to perform an action, tell them what tool you'll use.
-Keep responses concise and actionable.
-If you can answer from the context, do so. Otherwise, suggest running specific tools."""
+Instructions:
+- Answer the user's question using the dataset context above.
+- For questions about pricing, features, trends, or patterns — use the actual statistics provided.
+- Provide specific numbers, ranges, and percentages from the data.
+- Give actionable, data-driven recommendations.
+- If you need more analysis, suggest running specific tools (EDA, ML, business insights, etc.).
+- Be concise but thorough. Use markdown formatting for readability.
+- If the question is about the data, answer it directly using the context. Do NOT say "I don't have enough information" when stats are provided."""
 
         try:
             response = await llm.chat([
-                {"role": "system", "content": "You are a helpful AI data analyst copilot. Be concise and actionable."},
+                {"role": "system", "content": "You are an expert AI data analyst copilot. You have access to the dataset's statistics, column info, and key metrics. Always use the provided data context to give specific, actionable answers. Be concise and use markdown formatting."},
                 {"role": "user", "content": prompt},
             ])
             return response

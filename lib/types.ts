@@ -150,9 +150,18 @@ export interface DashboardConfig {
   kpis: Array<{
     name: string;
     value: string;
-    trend?: string;
+    format?: string;
+    trend?: {
+      direction: string;
+      pct: number;
+      label: string;
+      sparkline?: Array<Record<string, unknown>>;
+    };
+    sparkline?: Array<Record<string, unknown>>;
     icon: string;
-    color: string;
+    color: number;
+    source_column?: string;
+    extra?: Record<string, number>;
   }>;
   charts: Array<{
     type: string;
@@ -161,10 +170,95 @@ export interface DashboardConfig {
     y?: string;
     columns?: string[];
     description?: string;
+    plotly?: Record<string, unknown>;
   }>;
+  rendered_charts?: Array<{
+    type: string;
+    title: string;
+    x?: string;
+    y?: string;
+    columns?: string[];
+    description?: string;
+    plotly?: Record<string, unknown>;
+    section?: string;
+  }>;
+  sections?: Array<{
+    title: string;
+    charts: number[];
+    icon?: string;
+    description?: string;
+  }>;
+  insights?: string[];
+  ai_insights?: Array<{
+    type: "success" | "error" | "warning" | "info";
+    message: string;
+    icon: string;
+  }>;
+  recommendations?: Array<{
+    action: string;
+    reason: string;
+    impact: string;
+    category: string;
+  }>;
+  detective_issues?: Array<{
+    column: string;
+    type: string;
+    count: number;
+    total: number;
+    pct: number;
+    severity: "critical" | "warning" | "info";
+    suggested_fix: string;
+    confidence: number;
+  }>;
+  story_segments?: Array<{
+    chapter: string;
+    narrative: string;
+  }>;
+  outlier_data?: Record<string, { count: number; pct: number; total: number }>;
+  data_quality?: {
+    overall: number;
+    completeness: number;
+    consistency: number;
+    uniqueness: number;
+    validity: number;
+    accuracy: number;
+  };
+  ai_health_score?: number;
+  feature_importance?: Array<{
+    feature: string;
+    importance: number;
+    direction: string;
+  }>;
+  ml_summary?: {
+    target_column: string;
+    best_model: string;
+    best_score?: number;
+    ml_available: boolean;
+  } | null;
+  prediction_summary?: {
+    has_prediction: boolean;
+  };
+  geo_data?: {
+    columns: string[];
+    count: number;
+  } | null;
   filters: Array<{
     column: string;
     type: string;
   }>;
   layout: string;
+  columns?: number;
+  total_charts?: number;
+  total_kpis?: number;
+  dataset_summary?: {
+    records: number;
+    columns: number;
+    numeric: number;
+    categorical: number;
+    dates: number;
+    missing_pct: number;
+    duplicate_pct: number;
+    data_quality_score?: number;
+    health_score?: number;
+  };
 }

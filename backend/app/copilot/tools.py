@@ -143,6 +143,58 @@ TOOL_REGISTRY: dict[str, ToolDefinition] = {
         category="automation",
         estimated_time=30,
     ),
+    "goal": ToolDefinition(
+        name="Goal Detection",
+        description="Automatically detect what you want to achieve and recommend the best ML pipeline",
+        input_schema={"message": ""},
+        category="modeling",
+        estimated_time=3,
+    ),
+    "confidence": ToolDefinition(
+        name="AI Confidence Checker",
+        description="Pre-training validation: check dataset size, target leakage, class imbalance, multicollinearity, and more",
+        input_schema={"target_column": ""},
+        category="modeling",
+        requires_target=True,
+        estimated_time=2,
+    ),
+    "playground": ToolDefinition(
+        name="Model Playground",
+        description="Train and compare multiple ML models with accuracy, speed, model size, explainability scores, and learning curves",
+        input_schema={"target_column": "", "models": []},
+        category="modeling",
+        requires_target=True,
+        estimated_time=20,
+    ),
+    "simulation": ToolDefinition(
+        name="What-If Simulation",
+        description="Simulate what happens if certain variables change (e.g., increase marketing spend by 20%)",
+        input_schema={"scenario": "", "target_column": "", "changes": []},
+        category="modeling",
+        requires_target=True,
+        estimated_time=10,
+    ),
+    "lineage": ToolDefinition(
+        name="Data Lineage",
+        description="Show the complete transformation history of the dataset with rollback capability",
+        input_schema={},
+        category="analysis",
+        estimated_time=2,
+    ),
+    "marketplace": ToolDefinition(
+        name="Data Marketplace",
+        description="Suggest public datasets to enrich your analysis (demographics, weather, economic indicators, etc.)",
+        input_schema={},
+        category="analysis",
+        estimated_time=3,
+    ),
+    "alerting": ToolDefinition(
+        name="AI Insight Alerts",
+        description="Proactively detect data quality issues, extreme values, strong correlations, and performance changes",
+        input_schema={},
+        category="analysis",
+        estimated_time=2,
+    ),
 }
 
 
