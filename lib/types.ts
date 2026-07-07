@@ -308,3 +308,61 @@ export interface DashboardConfig {
     category: string;
   }>;
 }
+
+export interface SheetInfo {
+  name: string;
+  index: number;
+  classification: "data" | "summary" | "chart" | "pivot" | "template";
+  rows: number;
+  columns: number;
+  column_names: string[];
+  dtypes: Record<string, string>;
+  confidence: number;
+  signals: string[];
+  notes: string;
+}
+
+export interface SheetRelationship {
+  left_sheet: string;
+  right_sheet: string;
+  kind: "common_key" | "column_overlap" | "value_overlap" | "none";
+  confidence: number;
+  common_columns: string[];
+  join_column: string | null;
+  key_uniqueness: number;
+  sample_overlap: number;
+  notes: string;
+}
+
+export interface SheetRecommendation {
+  action: "merge" | "join" | "analyze_separately";
+  left_sheet: string | null;
+  right_sheet: string | null;
+  join_column: string | null;
+  join_how: string;
+  confidence: number;
+  reasoning: string;
+  other_sheets: string[];
+}
+
+export interface MultisheetData {
+  multisheet: boolean;
+  sheets: SheetInfo[];
+  relationships: SheetRelationship[];
+  recommendation: SheetRecommendation | null;
+  total_sheets: number;
+  data_sheets: string[];
+}
+
+export interface MultisheetExecuteResult {
+  status: string;
+  action: string;
+  error?: string;
+  new_dataset_id?: number;
+  new_dataset_name?: string;
+  rows?: number;
+  columns?: number;
+  column_names?: string[];
+  message?: string;
+  output_path?: string | null;
+}

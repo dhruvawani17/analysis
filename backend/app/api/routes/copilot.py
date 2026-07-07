@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
 
-from app.api.deps import get_db, get_dataset_or_404
-from app.db.models import Dataset, Conversation, ToolInvocation
+from app.api.deps import get_db, get_dataset_or_404, get_current_user
+from app.db.models import Dataset, Conversation, ToolInvocation, User
 
 router = APIRouter()
 

@@ -56,19 +56,18 @@ def _compute_trend(series: pd.Series) -> dict:
 
 
 def _make_sparkline(series: pd.Series, color: str = "#2563EB") -> list:
-    """Generate a mini sparkline trace for KPIs."""
+    """Generate a mini sparkline trace for KPIs (returns JSON-serializable dict)."""
     vals = series.dropna().values[-50:]
     if len(vals) < 2:
         return []
-    import plotly.graph_objects as go
-    trace = go.Scatter(
-        y=vals,
-        mode="lines",
-        line=dict(color=color, width=2),
-        showlegend=False,
-        hoverinfo="skip",
-    )
-    return [trace]
+    return [{
+        "type": "scatter",
+        "y": vals.tolist(),
+        "mode": "lines",
+        "line": {"color": color, "width": 2},
+        "showlegend": False,
+        "hoverinfo": "skip",
+    }]
 
 
 def _apply_pbi_style(fig, title: str = "", height: int = 320):

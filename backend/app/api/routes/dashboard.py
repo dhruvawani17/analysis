@@ -22,7 +22,7 @@ async def get_dashboard(
     if not dashboard:
         raise HTTPException(status_code=404, detail="No dashboard found")
 
-    return {"config": json.loads(dashboard.config)}
+    return {"config": dashboard.config if isinstance(dashboard.config, dict) else json.loads(dashboard.config)}
 
 
 @router.post("/generate/{dataset_id}")
@@ -33,7 +33,6 @@ async def generate_dashboard(
     from app.core.storage import load_dataframe
     from app.tools.advanced import dashboard_tool
 
-    # Load ML context from recent tool invocations
     ml_context = {}
     try:
         inv_result = await db.execute(
@@ -44,8 +43,8 @@ async def generate_dashboard(
         )
         ml_invocation = inv_result.scalar_one_or_none()
         if ml_invocation and ml_invocation.result:
-            ml_data = json.loads(ml_invocation.result)
-            if isinstance(ml_data, dict):  # ToolResult.to_dict()
+            ml_data = ml_invocation.result if isinstance(ml_invocation.result, dict) else json.loads(ml_invocation.result)
+            if isinstance(ml_data, dict):
                 inner = ml_data.get("data", ml_data)
                 ml_context = {
                     "target_column": inner.get("target_column", inner.get("target", "")),
@@ -58,7 +57,7 @@ async def generate_dashboard(
     except Exception:
         pass
 
-    df = load_dataframe(dataset.cleaned_file_path or dataset.file_path)
+    df = load_dataframe(dataset.file_path)
     result = await dashboard_tool(dataset.id, df, {"ml_context": ml_context})
 
     if result.status == "error":
@@ -72,9 +71,9 @@ async def generate_dashboard(
     dashboard_obj = existing.scalar_one_or_none()
 
     if dashboard_obj:
-        dashboard_obj.config = json.dumps(config)
+        dashboard_obj.config = config
     else:
-        dashboard_obj = Dashboard(dataset_id=dataset.id, config=json.dumps(config))
+        dashboard_obj = Dashboard(dataset_id=dataset.id, config=config)
         db.add(dashboard_obj)
 
     await db.commit()

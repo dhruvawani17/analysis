@@ -1,3 +1,5 @@
+import { auth } from "./firebase";
+
 const isProd = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const API_PREFIX = isProd ? "/api/backend" : "/api";
@@ -7,6 +9,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isFormData = options?.body instanceof FormData;
   if (!isFormData && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
+  }
+
+  // Attach Firebase UID for backend user-scoping
+  const user = auth.currentUser;
+  if (user?.uid) {
+    headers["X-Firebase-UID"] = user.uid;
   }
 
   const res = await fetch(`${BASE_URL}${API_PREFIX}${path}`, { ...options, headers });
@@ -95,6 +103,20 @@ export const api = {
       }),
     tools: () =>
       request<{ categories: Record<string, Array<{ name: string; description: string; category: string; estimated_time: number }>> }>("/copilot/tools"),
+  },
+
+  multisheet: {
+    execute: (datasetId: number, body: {
+      action: string;
+      left_sheet?: string | null;
+      right_sheet?: string | null;
+      join_column?: string | null;
+      join_how?: string;
+    }) =>
+      request<import("./types").MultisheetExecuteResult>(`/datasets/${datasetId}/multisheet/execute`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
   },
 
   dashboard: {

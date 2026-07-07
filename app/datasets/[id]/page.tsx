@@ -33,6 +33,7 @@ import dynamic from "next/dynamic";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function DatasetPage({
   params,
@@ -89,7 +90,7 @@ export default function DatasetPage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
       </div>
     );
@@ -97,8 +98,8 @@ export default function DatasetPage({
 
   if (!dataset) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50">
-        <p className="text-gray-500">Dataset not found</p>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <p className="text-gray-500 dark:text-slate-400 dark:text-slate-500">Dataset not found</p>
       </div>
     );
   }
@@ -108,22 +109,22 @@ export default function DatasetPage({
   const charts = eda?.charts as Record<string, any> | undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-indigo-100 bg-white/70 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
         <div className="container mx-auto flex items-center gap-4 py-4 px-6">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="rounded-xl hover:bg-indigo-50">
-              <ArrowLeft className="h-4 w-4 text-indigo-600" />
+            <Button variant="ghost" size="icon" className="rounded-xl hover:bg-accent">
+              <ArrowLeft className="h-4 w-4 text-primary" />
             </Button>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 truncate">{dataset.name}</h1>
+            <h1 className="text-lg font-bold text-foreground truncate">{dataset.name}</h1>
             <div className="flex items-center gap-2 mt-0.5">
-              <Badge variant="secondary" className="text-xs bg-indigo-50 text-indigo-600 border-0">
+              <Badge variant="secondary" className="text-xs bg-indigo-50 text-primary dark:bg-indigo-950 dark:text-indigo-400 border-0">
                 {dataset.rows?.toLocaleString() ?? "?"} rows
               </Badge>
-              <Badge variant="secondary" className="text-xs bg-violet-50 text-violet-600 border-0">
+              <Badge variant="secondary" className="text-xs bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400 border-0">
                 {dataset.columns} columns
               </Badge>
             </div>
@@ -136,44 +137,45 @@ export default function DatasetPage({
               </Button>
             </Link>
             <a href={api.datasets.downloadUrl(datasetId, "csv")} download>
-              <Button variant="outline" size="sm" className="gap-1.5 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300">
+              <Button variant="outline" size="sm" className="gap-1.5 border-indigo-200 dark:border-slate-700 hover:bg-accent hover:border-indigo-300">
                 <Download className="h-3.5 w-3.5" />
                 CSV
               </Button>
             </a>
+            <ThemeToggle />
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-6 py-6 max-w-6xl">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white/80 backdrop-blur-sm border border-indigo-100 p-1 rounded-xl">
-            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-indigo-500 data-[state=active]:text-white">
+          <TabsList className="bg-card backdrop-blur-sm dark:bg-slate-900/80 border border-border p-1 rounded-xl">
+            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <BarChart3 className="h-4 w-4 mr-1.5" />
               Overview
             </TabsTrigger>
           </TabsList>
-          <div className="flex gap-1 bg-white/80 backdrop-blur-sm border border-indigo-100 p-1 rounded-xl -mt-6 mb-6">
+          <div className="flex gap-1 bg-card backdrop-blur-sm dark:bg-slate-900/80 border border-border p-1 rounded-xl -mt-6 mb-6">
             <Link href={`/datasets/${datasetId}/chat`}>
-              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-accent">
                 <Bot className="h-4 w-4" />
                 Chat
               </Button>
             </Link>
             <Link href={`/datasets/${datasetId}/dashboard`}>
-              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-accent">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
               </Button>
             </Link>
             <Link href={`/datasets/${datasetId}/ml`}>
-              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-accent">
                 <Brain className="h-4 w-4" />
                 Models
               </Button>
             </Link>
             <Link href={`/datasets/${datasetId}/report`}>
-              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-indigo-50">
+              <Button variant="ghost" size="sm" className="gap-1.5 rounded-lg hover:bg-accent">
                 <FileText className="h-4 w-4" />
                 Reports
               </Button>
@@ -185,60 +187,60 @@ export default function DatasetPage({
             {/* Quick Actions */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Link href={`/datasets/${datasetId}/chat`}>
-                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-card border-border hover:border-indigo-200 dark:border-slate-700">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-sm">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br bg-primary flex items-center justify-center shadow-sm">
                         <Bot className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">AI Copilot</h3>
-                        <p className="text-xs text-gray-500">Chat with your data</p>
+                        <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">AI Copilot</h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">Chat with your data</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </Link>
               <Link href={`/datasets/${datasetId}/dashboard`}>
-                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-card border-border hover:border-indigo-200 dark:border-slate-700">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-sm">
                         <LayoutDashboard className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">Dashboard</h3>
-                        <p className="text-xs text-gray-500">AI-generated dashboard</p>
+                        <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Dashboard</h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">AI-generated dashboard</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </Link>
               <Link href={`/datasets/${datasetId}/ml`}>
-                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-card border-border hover:border-indigo-200 dark:border-slate-700">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-sm">
                         <Brain className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">Models</h3>
-                        <p className="text-xs text-gray-500">Train ML models</p>
+                        <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Models</h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">Train ML models</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </Link>
               <Link href={`/datasets/${datasetId}/report`}>
-                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-white/80 border-indigo-100 hover:border-indigo-200">
+                <Card className="group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer h-full bg-card border-border hover:border-indigo-200 dark:border-slate-700">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-sm">
                         <FileText className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">Reports</h3>
-                        <p className="text-xs text-gray-500">Generate reports</p>
+                        <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Reports</h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">Generate reports</p>
                       </div>
                     </div>
                   </CardContent>
@@ -248,13 +250,13 @@ export default function DatasetPage({
 
             {/* Clean Data Card */}
             {!cleanResult && !analysisResult && (
-              <Card className="bg-white/80 border-indigo-100 overflow-hidden">
+              <Card className="bg-card border-border overflow-hidden">
                 <CardContent className="p-8 text-center">
                   <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center mx-auto mb-4">
                     <Wand2 className="h-7 w-7 text-emerald-500" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Clean your data first</h3>
-                  <p className="text-sm text-gray-500 mb-5">
+                  <h3 className="text-lg font-bold text-foreground mb-1">Clean your data first</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500 mb-5">
                     Fix missing values, remove duplicates, detect outliers, and standardize types
                   </p>
                   {dataset.cleaned ? (
@@ -298,9 +300,9 @@ export default function DatasetPage({
                       { label: "Duplicates Removed", value: cleanResult.cleaning.duplicates_removed },
                       { label: "Missing Fixed", value: cleanResult.cleaning.missing_fixed },
                     ].map((item) => (
-                      <div key={item.label} className="rounded-xl bg-white/80 p-4 text-center border border-emerald-100">
-                        <p className="text-2xl font-bold text-gray-900">{String(item.value ?? "0")}</p>
-                        <p className="text-xs text-gray-500 mt-1">{item.label}</p>
+                      <div key={item.label} className="rounded-xl bg-card p-4 text-center border border-emerald-100">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{String(item.value ?? "0")}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500 mt-1">{item.label}</p>
                       </div>
                     ))}
                   </div>
@@ -310,13 +312,13 @@ export default function DatasetPage({
 
             {/* Run Analysis Button */}
             {!analysisResult && (
-              <Card className="bg-white/80 border-indigo-100 overflow-hidden">
+              <Card className="bg-card border-border overflow-hidden">
                 <CardContent className="p-8 text-center">
                   <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center mx-auto mb-4">
                     <Sparkles className="h-7 w-7 text-indigo-500" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Ready to analyze</h3>
-                  <p className="text-sm text-gray-500 mb-5">
+                  <h3 className="text-lg font-bold text-foreground mb-1">Ready to analyze</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500 mb-5">
                     Run a full analysis to get statistics, charts, and AI insights
                   </p>
                   <Button
@@ -337,7 +339,7 @@ export default function DatasetPage({
             )}
 
             {/* Schema */}
-            <Card className="bg-white/80 border-indigo-100">
+            <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <BarChart3 className="h-4 w-4 text-indigo-500" />
@@ -348,17 +350,17 @@ export default function DatasetPage({
                 <ScrollArea className="max-h-[300px]">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-indigo-100">
+                      <TableRow className="border-border">
                         <TableHead className="text-indigo-700">Column</TableHead>
                         <TableHead className="text-indigo-700">Type</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {dataset.column_names.map((col) => (
-                        <TableRow key={col} className="border-indigo-50 hover:bg-indigo-50/50">
+                        <TableRow key={col} className="border-indigo-50 hover:bg-accent/50">
                           <TableCell className="font-mono text-sm font-medium">{col}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="text-xs border-indigo-200 text-indigo-600">
+                            <Badge variant="outline" className="text-xs border-indigo-200 dark:border-slate-700 text-primary">
                               {dataset.dtypes[col] ?? "unknown"}
                             </Badge>
                           </TableCell>
@@ -374,7 +376,7 @@ export default function DatasetPage({
             {analysisResult && (
               <>
                 {analysisResult.ai_summary && analysisResult.ai_summary !== "AI summary generation failed (check LLM provider configuration)." && (
-                  <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
+                  <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
                         <Sparkles className="h-5 w-5 text-indigo-500" />
@@ -382,13 +384,13 @@ export default function DatasetPage({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm leading-relaxed text-gray-700">{analysisResult.ai_summary}</p>
+                      <p className="text-sm leading-relaxed text-gray-700 dark:text-slate-300 dark:text-slate-600">{analysisResult.ai_summary}</p>
                     </CardContent>
                   </Card>
                 )}
 
                 {eda?.insights && eda.insights.length > 0 && (
-                  <Card className="bg-white/80 border-indigo-100">
+                  <Card className="bg-card border-border">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
                         <Sparkles className="h-5 w-5 text-amber-500" />
@@ -400,7 +402,7 @@ export default function DatasetPage({
                         {eda.insights.map((insight: any, i: number) => (
                           <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
                             <span className="text-amber-500 mt-0.5">•</span>
-                            <span className="text-sm text-gray-700">{insight.message}</span>
+                            <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{insight.message}</span>
                           </div>
                         ))}
                       </div>
@@ -410,7 +412,7 @@ export default function DatasetPage({
 
                 <div className="grid gap-6 lg:grid-cols-2">
                   {charts?.missing && (
-                    <Card className="bg-white/80 border-indigo-100">
+                    <Card className="bg-card border-border">
                       <CardHeader>
                         <CardTitle className="text-base">Missing Values</CardTitle>
                       </CardHeader>
@@ -426,7 +428,7 @@ export default function DatasetPage({
                   )}
 
                   {charts?.correlation && eda?.numeric_columns && eda.numeric_columns.length > 1 && (
-                    <Card className="bg-white/80 border-indigo-100">
+                    <Card className="bg-card border-border">
                       <CardHeader>
                         <CardTitle className="text-base">Correlation Matrix</CardTitle>
                       </CardHeader>
@@ -443,7 +445,7 @@ export default function DatasetPage({
                 </div>
 
                 {eda?.stats && Object.keys(eda.stats).length > 0 && (
-                  <Card className="bg-white/80 border-indigo-100">
+                  <Card className="bg-card border-border">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
                         <BarChart3 className="h-5 w-5 text-indigo-500" />
@@ -454,7 +456,7 @@ export default function DatasetPage({
                       <ScrollArea className="max-h-[400px]">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-indigo-100">
+                            <TableRow className="border-border">
                               <TableHead className="text-indigo-700">Column</TableHead>
                               <TableHead className="text-indigo-700">Mean</TableHead>
                               <TableHead className="text-indigo-700">Std</TableHead>
@@ -466,7 +468,7 @@ export default function DatasetPage({
                           </TableHeader>
                           <TableBody>
                             {Object.entries(eda.stats as Record<string, any>).map(([col, s]) => (
-                              <TableRow key={col} className="border-indigo-50 hover:bg-indigo-50/50">
+                              <TableRow key={col} className="border-indigo-50 hover:bg-accent/50">
                                 <TableCell className="font-mono text-xs font-medium">{col}</TableCell>
                                 <TableCell>{s.mean?.toFixed(2) ?? "-"}</TableCell>
                                 <TableCell>{s.std?.toFixed(2) ?? "-"}</TableCell>
@@ -487,7 +489,7 @@ export default function DatasetPage({
                   <div className="grid gap-6 lg:grid-cols-2">
                     {Object.entries(charts.histograms as Record<string, any>).map(
                       ([col, chart]) => (
-                        <Card key={col} className="bg-white/80 border-indigo-100">
+                        <Card key={col} className="bg-card border-border">
                           <CardHeader>
                             <CardTitle className="text-base">{col}</CardTitle>
                           </CardHeader>

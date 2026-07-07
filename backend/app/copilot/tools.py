@@ -195,6 +195,13 @@ TOOL_REGISTRY: dict[str, ToolDefinition] = {
         category="analysis",
         estimated_time=2,
     ),
+    "multisheet": ToolDefinition(
+        name="Multi-Sheet Analyzer",
+        description="Detect every sheet in an Excel workbook, classify each (data/summary/chart/pivot/template), infer relationships via common keys, and recommend merge/join/analyze-separately workflow",
+        input_schema={},
+        category="analysis",
+        estimated_time=3,
+    ),
 }
 
 

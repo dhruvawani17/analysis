@@ -14,10 +14,12 @@ import {
   PieChart, Grid3X3, ScatterChart, CheckCircle2, Shield,
   AlertCircle, Info, BookOpen, ListChecks, FileSearch, ShieldAlert,
   Crosshair, TrendingUp as TrendIcon, ClipboardList,
+  MessageCircle, Sparkles, ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { DashboardConfig } from "@/lib/types";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -40,51 +42,42 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const chartTypeBadge: Record<string, { label: string; color: string }> = {
-  bar: { label: "Bar", color: "bg-blue-100 text-blue-700 border-blue-200" },
-  line: { label: "Line", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  area: { label: "Area", color: "bg-teal-100 text-teal-700 border-teal-200" },
-  pie: { label: "Pie", color: "bg-violet-100 text-violet-700 border-violet-200" },
-  donut: { label: "Donut", color: "bg-purple-100 text-purple-700 border-purple-200" },
-  scatter: { label: "Scatter", color: "bg-amber-100 text-amber-700 border-amber-200" },
-  histogram: { label: "Histogram", color: "bg-rose-100 text-rose-700 border-rose-200" },
-  box: { label: "Box Plot", color: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-  heatmap: { label: "Heatmap", color: "bg-orange-100 text-orange-700 border-orange-200" },
-  treemap: { label: "Treemap", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
-  funnel: { label: "Funnel", color: "bg-pink-100 text-pink-700 border-pink-200" },
-  sunburst: { label: "Sunburst", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-  waterfall: { label: "Waterfall", color: "bg-sky-100 text-sky-700 border-sky-200" },
+  bar: { label: "Bar", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  line: { label: "Line", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  area: { label: "Area", color: "bg-teal-500/10 text-teal-400 border-teal-500/20" },
+  pie: { label: "Pie", color: "bg-violet-500/10 text-violet-400 border-violet-500/20" },
+  donut: { label: "Donut", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  scatter: { label: "Scatter", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  histogram: { label: "Histogram", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
+  box: { label: "Box Plot", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
+  heatmap: { label: "Heatmap", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
+  treemap: { label: "Treemap", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
+  funnel: { label: "Funnel", color: "bg-pink-500/10 text-pink-400 border-pink-500/20" },
+  sunburst: { label: "Sunburst", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  waterfall: { label: "Waterfall", color: "bg-sky-500/10 text-sky-400 border-sky-500/20" },
 };
 
-function SeverityBadge({ severity }: { severity: string }) {
-  const m: Record<string, { bg: string; text: string; dot: string }> = {
-    critical: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
-    warning: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
-    info: { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-500" },
-  };
-  const s = m[severity] || m.info;
-  return (
-    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${s.bg} ${s.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />{severity}
-    </span>
-  );
-}
+const severityColors: Record<string, { bg: string; text: string; border: string }> = {
+  critical: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20" },
+  warning: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20" },
+  info: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
+  success: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
+};
 
-function InsightCard({ insight }: { insight: { type: string; message: string } }) {
-  const c: Record<string, { border: string; bg: string; icon: string; text: string }> = {
-    success: { border: "border-emerald-200", bg: "bg-emerald-50", icon: "text-emerald-500", text: "text-emerald-800" },
-    error: { border: "border-red-200", bg: "bg-red-50", icon: "text-red-500", text: "text-red-800" },
-    warning: { border: "border-amber-200", bg: "bg-amber-50", icon: "text-amber-500", text: "text-amber-800" },
-    info: { border: "border-blue-200", bg: "bg-blue-50", icon: "text-blue-500", text: "text-blue-800" },
-  };
-  const style = c[insight.type] || c.info;
-  const Icon = insight.type === "success" ? CheckCircle2 : insight.type === "error" ? AlertCircle : insight.type === "warning" ? AlertTriangle : Info;
-  return (
-    <div className={`flex items-start gap-2 px-3 py-2 rounded-lg border ${style.border} ${style.bg}`}>
-      <div className={`shrink-0 mt-0.5 ${style.icon}`}><Icon className="h-3.5 w-3.5" /></div>
-      <p className={`text-[11px] leading-relaxed ${style.text}`}>{insight.message}</p>
-    </div>
-  );
-}
+const insightTypeColors: Record<string, { bg: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }> = {
+  success: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", icon: CheckCircle2 },
+  error: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", icon: AlertCircle },
+  warning: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20", icon: AlertTriangle },
+  info: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20", icon: Info },
+};
+
+const actionBadgeColors: Record<string, string> = {
+  "Fix Now": "bg-red-500/10 text-red-400 border-red-500/20",
+  Review: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  Investigate: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  Generate: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+  View: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+};
 
 export default function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -120,30 +113,12 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
     setExporting(fmt);
     try {
       const el = dashboardRef.current;
-
       if (fmt === "pdf") {
-        const rect = el.getBoundingClientRect();
-        const w = Math.ceil(rect.width);
-        const h = Math.ceil(el.scrollHeight);
-        const printWin = window.open("", "_blank", `width=${w},height=${h}`);
-        if (!printWin) { alert("Please allow popups to export PDF"); return; }
-        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(s => s.outerHTML).join("\n");
-        printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Dashboard Export</title>${styles}<style>@media print { body { margin: 0; padding: 16px; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style></head><body>${el.outerHTML}</body></html>`);
-        printWin.document.close();
-        printWin.focus();
-        setTimeout(() => { printWin.print(); printWin.close(); }, 800);
+        document.body.classList.add("printing-dashboard");
+        window.print();
       } else {
         const domToImage = (await import("dom-to-image-more")).default;
-        const dataUrl = await domToImage.toPng(el, {
-          pixelRatio: 2,
-          filter: (node: Node) => {
-            if (node instanceof HTMLElement) {
-              if (node.classList.contains("print:hidden")) return false;
-              if (node.tagName === "BUTTON") return false;
-            }
-            return true;
-          },
-        });
+        const dataUrl = await domToImage.toPng(el, { pixelRatio: 2, filter: (node: Node) => { if (node instanceof HTMLElement) { if (node.classList.contains("print:hidden")) return false; if (node.tagName === "BUTTON" || node.tagName === "A") return false; } return true; } });
         const link = document.createElement("a");
         link.download = `dashboard-${datasetId}.png`;
         link.href = dataUrl;
@@ -151,70 +126,85 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
       }
     } catch (err) {
       console.error("Export failed:", err);
-      alert("PNG export failed. Try the PDF export instead.");
     } finally {
-      setTimeout(() => setExporting("none"), 2000);
+      document.body.classList.remove("printing-dashboard");
+      setTimeout(() => setExporting("none"), 1000);
     }
   }, [datasetId]);
 
   const totalKpis = config?.kpis?.length || 0;
   const totalCharts = allCharts.length;
 
+  const sidebarInsights = useMemo(() => {
+    const insights: Array<{ icon: string; text: string; action: string; severity: string }> = [];
+    if (config?.ai_insights) {
+      config.ai_insights.slice(0, 3).forEach(i => insights.push({ icon: i.type === "success" ? "check" : i.type === "warning" ? "alert" : "info", text: i.message, action: i.type === "success" ? "View" : i.type === "warning" ? "Review" : "Investigate", severity: i.type }));
+    }
+    if (config?.detective_issues) {
+      config.detective_issues.slice(0, 2).forEach(i => insights.push({ icon: "alert", text: `${i.column}: ${i.type} (${i.pct}%)`, action: "Fix Now", severity: i.severity }));
+    }
+    if (config?.action_items) {
+      config.action_items.slice(0, 2).forEach(i => insights.push({ icon: "check", text: i.action, action: "Generate", severity: i.impact }));
+    }
+    return insights.slice(0, 6);
+  }, [config]);
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <header className="border-b border-[#E2E8F0] bg-white sticky top-0 z-50 shadow-sm print:hidden">
-        <div className="mx-auto flex items-center gap-2 py-2 px-4 max-w-[1600px]">
+    <div className="min-h-screen bg-[#09090b]">
+      <header className="border-b border-[#27272a] bg-[#09090b]/80 backdrop-blur-xl sticky top-0 z-50 print:hidden">
+        <div className="mx-auto flex items-center gap-3 py-2.5 px-4 max-w-[1800px]">
           <Link href={`/datasets/${datasetId}`}>
-            <Button variant="ghost" size="icon" className="rounded-lg hover:bg-slate-100 h-7 w-7"><ArrowLeft className="h-3.5 w-3.5 text-slate-500" /></Button>
+            <Button variant="ghost" size="icon" className="rounded-lg hover:bg-[#18181b] h-8 w-8">
+              <ArrowLeft className="h-4 w-4 text-[#a1a1aa]" />
+            </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm"><LayoutDashboard className="h-3 w-3 text-white" /></div>
+            <div className="h-7 w-7 rounded-lg bg-[#6366f1] flex items-center justify-center">
+              <LayoutDashboard className="h-3.5 w-3.5 text-white" />
+            </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-semibold text-slate-800">{config?.title || "Dashboard"}</h1>
-                {config && (<><Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-blue-200 text-blue-600 bg-blue-50 font-medium">{totalCharts} charts</Badge><Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-emerald-200 text-emerald-600 bg-emerald-50 font-medium">{totalKpis} KPIs</Badge></>)}
-              </div>
-              {dataset && <p className="text-[9px] text-slate-400">{dataset.name}</p>}
+              <h1 className="text-sm font-semibold text-[#f8fafc]">{config?.title || "Dashboard"}</h1>
+              {dataset && <p className="text-[10px] text-[#a1a1aa]">{dataset.name}</p>}
             </div>
           </div>
           <div className="flex-1" />
-          {config && sections.length > 1 && (
-            <div className="hidden md:flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5 mr-1">
-              <button onClick={() => setSelectedSection(null)} className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all whitespace-nowrap ${selectedSection === null ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>All</button>
-              {sections.map(s => (
-                <button key={s.title} onClick={() => setSelectedSection(s.title)} className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all whitespace-nowrap ${selectedSection === s.title ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>{s.title}</button>
-              ))}
-            </div>
-          )}
           {config && (
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={() => handleExport("png")} disabled={exporting !== "none"} className="gap-1 border-slate-200 text-slate-600 h-6 text-[10px] px-1.5">
-                {exporting === "png" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <ImageDown className="h-2.5 w-2.5" />}PNG
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-[10px] text-[#a1a1aa]">
+                <span className="font-medium text-[#f8fafc]">{totalCharts}</span> charts
+                <span className="text-[#27272a]">·</span>
+                <span className="font-medium text-[#f8fafc]">{totalKpis}</span> KPIs
+              </div>
+              <div className="w-px h-3 bg-[#27272a]" />
+              <Button variant="outline" size="sm" onClick={() => handleExport("png")} disabled={exporting !== "none"} className="gap-1 border-[#27272a] text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#f8fafc] h-7 text-[10px] px-2">
+                {exporting === "png" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageDown className="h-3 w-3" />}PNG
               </Button>
-              <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={exporting !== "none"} className="gap-1 border-slate-200 text-slate-600 h-6 text-[10px] px-1.5">
-                {exporting === "pdf" ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <FileText className="h-2.5 w-2.5" />}PDF
+              <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={exporting !== "none"} className="gap-1 border-[#27272a] text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#f8fafc] h-7 text-[10px] px-2">
+                {exporting === "pdf" ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}PDF
               </Button>
-              <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} variant="outline" size="sm" className="gap-1 border-slate-200 text-slate-600 h-6 text-[10px] px-1.5">
-                {generateMutation.isPending ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <RefreshCw className="h-2.5 w-2.5" />}{config ? "Refresh" : "Generate"}
+              <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} size="sm" className="gap-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white h-7 text-[10px] px-2">
+                {generateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                {config ? "Refresh" : "Generate"}
               </Button>
+              <ThemeToggle />
             </div>
           )}
         </div>
       </header>
 
-      <main className="mx-auto px-4 py-4 max-w-[1600px]">
+      <main className="mx-auto px-4 py-4 max-w-[1800px]">
         {!config && !loadingDashboard && (
           <div className="flex items-center justify-center min-h-[60vh]">
-            <Card className="w-full max-w-md border-slate-200 shadow-sm bg-white">
+            <Card className="w-full max-w-md border-[#27272a] bg-[#18181b] shadow-none">
               <CardContent className="p-10 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center mx-auto mb-5 ring-1 ring-slate-200">
-                  <LayoutDashboard className="h-8 w-8 text-slate-400" />
+                <div className="h-16 w-16 rounded-2xl bg-[#18181b] border border-[#27272a] flex items-center justify-center mx-auto mb-5">
+                  <LayoutDashboard className="h-8 w-8 text-[#6366f1]" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-800 mb-1.5">Executive Dashboard</h3>
-                <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-lg font-semibold text-[#f8fafc] mb-1.5">Executive Dashboard</h3>
+                <p className="text-sm text-[#a1a1aa] mb-6 max-w-sm mx-auto leading-relaxed">
                   Generate a comprehensive AI-powered dashboard with KPIs, data quality scoring, feature importance, outlier detection, correlations, ML metrics, predictions, and narrative insights
                 </p>
-                <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} size="default" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} size="default" className="gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white">
                   {generateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LayoutDashboard className="h-4 w-4" />}
                   {generateMutation.isPending ? "Generating..." : "Generate Dashboard"}
                 </Button>
@@ -227,11 +217,11 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
           <div className="flex items-center justify-center min-h-[40vh]">
             <div className="text-center">
               <div className="relative mx-auto mb-5 h-14 w-14">
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 animate-pulse opacity-30" />
-                <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-blue-600" /></div>
+                <div className="absolute inset-0 rounded-xl bg-[#6366f1] animate-pulse opacity-20" />
+                <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-[#6366f1]" /></div>
               </div>
-              <p className="text-sm font-semibold text-slate-700">Building Your Executive Dashboard</p>
-              <p className="text-xs text-slate-400 mt-1">Computing data quality, distributions, correlations, ML insights, and narrative story</p>
+              <p className="text-sm font-semibold text-[#f8fafc]">Building Your Executive Dashboard</p>
+              <p className="text-xs text-[#a1a1aa] mt-1">Computing data quality, distributions, correlations, ML insights, and narrative story</p>
             </div>
           </div>
         )}
@@ -239,571 +229,607 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
         {config && (
           <div ref={dashboardRef} className="space-y-4">
 
-            <div className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white shadow-sm">
-              {ds && (<>
-                <div className="flex items-center gap-1 text-[10px] text-slate-500"><Database className="h-3 w-3 text-slate-400" /><span className="font-medium text-slate-700">{ds.records?.toLocaleString() || "—"}</span> records</div>
-                <div className="w-px h-3 bg-slate-200" />
-                <div className="flex items-center gap-1 text-[10px] text-slate-500"><Table className="h-3 w-3 text-slate-400" /><span className="font-medium text-slate-700">{ds.columns || "—"}</span> cols</div>
-                <div className="w-px h-3 bg-slate-200" />
-                <div className="flex items-center gap-1 text-[10px] text-slate-500"><Hash className="h-3 w-3 text-blue-400" /><span className="font-medium text-blue-600">{ds.numeric || 0}</span> num</div>
-                <div className="w-px h-3 bg-slate-200" />
-                <div className="flex items-center gap-1 text-[10px] text-slate-500"><List className="h-3 w-3 text-amber-400" /><span className="font-medium text-amber-600">{ds.categorical || 0}</span> cat</div>
-                <div className="w-px h-3 bg-slate-200" />
-                <div className="flex items-center gap-1 text-[10px] text-slate-500"><CalendarDays className="h-3 w-3 text-emerald-400" /><span className="font-medium text-emerald-600">{ds.dates || 0}</span> dates</div>
-                <div className="w-px h-3 bg-slate-200" />
-                <div className="flex items-center gap-1 text-[10px] text-slate-500"><AlertTriangle className={`h-3 w-3 ${(ds.missing_pct || 0) > 5 ? "text-red-400" : "text-emerald-400"}`} /><span className={`font-medium ${(ds.missing_pct || 0) > 5 ? "text-red-600" : "text-emerald-600"}`}>{ds.missing_pct || 0}%</span> missing</div>
-                {ds.duplicate_pct > 0 && (<><div className="w-px h-3 bg-slate-200" /><div className="flex items-center gap-1 text-[10px] text-slate-500"><Copy className={`h-3 w-3 ${ds.duplicate_pct > 2 ? "text-orange-400" : "text-slate-400"}`} /><span className={`font-medium ${ds.duplicate_pct > 2 ? "text-orange-600" : "text-slate-500"}`}>{ds.duplicate_pct}%</span> dupes</div></>)}
-                {ds.data_quality_score != null && (<><div className="w-px h-3 bg-slate-200" /><div className="flex items-center gap-1 text-[10px] text-slate-500"><Shield className="h-3 w-3 text-emerald-400" /><span className="font-medium text-emerald-600">{ds.data_quality_score}/100</span> DQ</div></>)}
-                <div className="flex-1" />
-                <div className="flex items-center gap-1 text-[10px] text-slate-400"><CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" /><span>{totalCharts} charts · {totalKpis} KPIs</span></div>
-              </>)}
-            </div>
-
+            {/* KPI Row */}
             {config.kpis && config.kpis.length > 0 && (
-              <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
-                {config.kpis.map((kpi, i) => {
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {config.kpis.slice(0, 6).map((kpi, i) => {
                   const Icon = iconMap[kpi.icon] || BarChart3;
                   const colorIdx = typeof kpi.color === "number" ? kpi.color % PBI_COLORS.length : 0;
                   const cs = PBI_COLORS[colorIdx];
                   const t = kpi.trend;
-                  const hs = kpi.sparkline && kpi.sparkline.length > 0;
-                  const extra = kpi.extra;
                   return (
-                    <div key={i} className="relative rounded-xl border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-default group">
-                      <div className="flex items-start justify-between mb-1.5">
-                        <div className={`h-6 w-6 rounded-lg bg-gradient-to-br ${cs.bg} flex items-center justify-center shadow-sm`}><Icon className="h-3 w-3 text-white" /></div>
+                    <div key={i} className="relative rounded-xl border border-[#27272a] bg-[#18181b] p-4 hover:border-[#3f3f46] transition-all duration-200">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${cs.bg} flex items-center justify-center`}>
+                          <Icon className="h-4 w-4 text-white" />
+                        </div>
                         {t && (
-                          <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[8px] font-medium ${t.direction === "up" ? "bg-emerald-50 text-emerald-600" : t.direction === "down" ? "bg-red-50 text-red-600" : "bg-slate-50 text-slate-500"}`}>
-                            {t.direction === "up" ? <TrendingUp className="h-2 w-2" /> : t.direction === "down" ? <TrendingDown className="h-2 w-2" /> : null}
+                          <div className={`flex items-center gap-0.5 text-[10px] font-medium ${t.direction === "up" ? "text-emerald-400" : t.direction === "down" ? "text-red-400" : "text-[#a1a1aa]"}`}>
+                            {t.direction === "up" ? <TrendingUp className="h-3 w-3" /> : t.direction === "down" ? <TrendingDown className="h-3 w-3" /> : null}
                             <span>{t.label}</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-[9px] font-medium text-slate-500 truncate">{kpi.name}</p>
-                      <p className="text-base font-bold text-slate-800 mt-px">{kpi.value}</p>
-                      {hs && (
-                        <div className="h-6 mt-0.5 -mx-0.5 -mb-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                          <Plot data={kpi.sparkline as any[]} layout={{ autosize: true, margin: { t: 0, b: 0, l: 0, r: 0 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", xaxis: { visible: false }, yaxis: { visible: false }, height: 24 }} config={{ displayModeBar: false, staticPlot: true }} className="w-full" />
-                        </div>
-                      )}
-                      {extra && (
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {extra.completeness != null && <span className="text-[7px] text-slate-400 bg-slate-50 px-1 rounded">C:{extra.completeness}%</span>}
-                          {extra.consistency != null && <span className="text-[7px] text-slate-400 bg-slate-50 px-1 rounded">Co:{extra.consistency}%</span>}
-                          {extra.validity != null && <span className="text-[7px] text-slate-400 bg-slate-50 px-1 rounded">V:{extra.validity}%</span>}
-                        </div>
-                      )}
-                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-b-xl bg-gradient-to-r ${cs.bg} opacity-60`} />
+                      <p className="text-[11px] text-[#a1a1aa] mb-0.5">{kpi.name}</p>
+                      <p className="text-2xl font-bold text-[#f8fafc]">{kpi.value}</p>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {config.data_quality && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <Shield className="h-4 w-4 text-emerald-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Data Quality Dashboard</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-emerald-200 text-emerald-600 bg-emerald-50 font-medium ml-1">{config.data_quality.overall}/100</Badge>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 p-4">
-                  {[
-                    { label: "Completeness", value: config.data_quality.completeness, color: "#2563EB" },
-                    { label: "Consistency", value: config.data_quality.consistency, color: "#10B981" },
-                    { label: "Uniqueness", value: config.data_quality.uniqueness, color: "#F59E0B" },
-                    { label: "Validity", value: config.data_quality.validity, color: "#8B5CF6" },
-                    { label: "Accuracy", value: config.data_quality.accuracy, color: "#EC4899" },
-                  ].map((m) => (
-                    <div key={m.label} className="text-center p-3 rounded-xl bg-slate-50 border border-slate-100">
-                      <div className="relative h-16 w-16 mx-auto mb-2">
-                        <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
-                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="3" />
-                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={m.color} strokeWidth="3" strokeDasharray={`${m.value}, 100`} strokeLinecap="round" />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center"><span className="text-sm font-bold text-slate-700">{m.value}%</span></div>
-                      </div>
-                      <p className="text-[10px] font-medium text-slate-500">{m.label}</p>
+            {/* Main content + Sidebar */}
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_340px]">
+
+              {/* Left: Charts */}
+              <div className="space-y-4">
+                {/* AI Insights Highlight */}
+                {config.ai_insights && config.ai_insights.length > 0 && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="h-4 w-4 text-[#f59e0b]" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">AI Insights</h2>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-[#f59e0b]/20 text-[#f59e0b] bg-[#f59e0b]/10 font-medium">{config.ai_insights.length}</Badge>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {config.ai_insights && config.ai_insights.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">AI Insights</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-amber-200 text-amber-600 bg-amber-50 font-medium ml-1">{config.ai_insights.length}</Badge>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
-                  {config.ai_insights.map((insight, i) => <InsightCard key={i} insight={insight} />)}
-                </div>
-              </div>
-            )}
-
-            {config.detective_issues && config.detective_issues.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">AI Data Detective</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-red-200 text-red-600 bg-red-50 font-medium ml-1">{config.detective_issues.length} issues</Badge>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {config.detective_issues.map((issue, i) => (
-                    <div key={i} className="flex items-start justify-between px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <SeverityBadge severity={issue.severity} />
-                          <span className="text-xs font-semibold text-slate-700">{issue.column}</span>
-                          <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">{issue.type}</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{issue.count} of {issue.total} values ({issue.pct}%)</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5 italic">{issue.suggested_fix}</p>
-                      </div>
-                      <div className="shrink-0 ml-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                          <Activity className="h-2.5 w-2.5" /> {issue.confidence}%
-                        </span>
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {config.ai_insights.map((insight, i) => {
+                        const style = insightTypeColors[insight.type] || insightTypeColors.info;
+                        const Icon = style.icon;
+                        return (
+                          <div key={i} className={`flex items-start gap-2.5 p-3 rounded-lg border ${style.border} ${style.bg}`}>
+                            <div className={`shrink-0 mt-0.5 ${style.text}`}><Icon className="h-3.5 w-3.5" /></div>
+                            <p className={`text-[11px] leading-relaxed ${style.text}`}>{insight.message}</p>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                )}
 
-            {config.recommendations && config.recommendations.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <ListChecks className="h-4 w-4 text-violet-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">AI Recommendations</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-violet-200 text-violet-600 bg-violet-50 font-medium ml-1">{config.recommendations.length}</Badge>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {config.recommendations.map((rec, i) => (
-                    <div key={i} className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                      <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${rec.impact === "high" ? "bg-emerald-100 text-emerald-600" : rec.impact === "medium" ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"}`}>
-                        <CheckCircle2 className="h-3 w-3" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-medium text-slate-800">{rec.action}</span>
-                          <Badge variant="outline" className={`text-[8px] px-1 py-0 h-3 font-medium ${rec.impact === "high" ? "border-emerald-200 text-emerald-600 bg-emerald-50" : rec.impact === "medium" ? "border-amber-200 text-amber-600 bg-amber-50" : "border-blue-200 text-blue-600 bg-blue-50"}`}>{rec.impact}</Badge>
-                          <span className="text-[8px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded">{rec.category}</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{rec.reason}</p>
-                      </div>
+                {/* Detective Issues */}
+                {config.detective_issues && config.detective_issues.length > 0 && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Data Detective</h2>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-red-500/20 text-red-400 bg-red-500/10 font-medium">{config.detective_issues.length} issues</Badge>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {config.story_segments && config.story_segments.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <BookOpen className="h-4 w-4 text-indigo-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Data Story</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-indigo-200 text-indigo-600 bg-indigo-50 font-medium ml-1">{config.story_segments.length} chapters</Badge>
-                </div>
-                <div className="p-4 space-y-3">
-                  {config.story_segments.map((seg, i) => (
-                    <div key={i} className="relative pl-5 border-l-2 border-indigo-200 pb-1 last:pb-0">
-                      <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-[7px] text-white font-bold shadow-sm">{i + 1}</div>
-                      <p className="text-[11px] font-semibold text-indigo-700 mb-0.5">{seg.chapter}</p>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">{seg.narrative}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {config.executive_summary && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <FileSearch className="h-4 w-4 text-blue-600" />
-                  <h2 className="text-sm font-semibold text-slate-800">Executive Summary</h2>
-                </div>
-                <div className="p-4">
-                  <p className="text-[12px] text-slate-700 leading-relaxed">{config.executive_summary}</p>
-                </div>
-              </div>
-            )}
-
-            {config.swot && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <Crosshair className="h-4 w-4 text-violet-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">SWOT Analysis</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
-                  {([
-                    { key: "strengths", label: "Strengths", color: "emerald", icon: "✓" },
-                    { key: "weaknesses", label: "Weaknesses", color: "red", icon: "✗" },
-                    { key: "opportunities", label: "Opportunities", color: "blue", icon: "→" },
-                    { key: "threats", label: "Threats", color: "amber", icon: "⚠" },
-                  ] as const).map(({ key, label, color, icon }) => {
-                    const items = config.swot![key];
-                    const colorMap: Record<string, { bg: string; border: string; text: string; header: string }> = {
-                      emerald: { bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-800", header: "text-emerald-700" },
-                      red: { bg: "bg-red-50", border: "border-red-100", text: "text-red-800", header: "text-red-700" },
-                      blue: { bg: "bg-blue-50", border: "border-blue-100", text: "text-blue-800", header: "text-blue-700" },
-                      amber: { bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-800", header: "text-amber-700" },
-                    };
-                    const c = colorMap[color];
-                    return (
-                      <div key={key} className={`rounded-lg border ${c.border} ${c.bg} p-3`}>
-                        <p className={`text-[11px] font-bold ${c.header} mb-1.5 uppercase tracking-wider`}>{label}</p>
-                        {items.length > 0 ? (
-                          <ul className="space-y-1">
-                            {items.map((item, j) => (
-                              <li key={j} className={`text-[10px] ${c.text} leading-relaxed flex items-start gap-1`}>
-                                <span className="font-bold mt-px shrink-0">{icon}</span>
-                                <span>{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className={`text-[10px] ${c.text} italic opacity-60`}>No {key} identified</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {config.risks && config.risks.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <ShieldAlert className="h-4 w-4 text-red-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Risk Assessment</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-red-200 text-red-600 bg-red-50 font-medium ml-1">{config.risks.length} risks</Badge>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {config.risks.map((risk, i) => {
-                    const urgencyColors: Record<string, { bg: string; text: string }> = {
-                      immediate: { bg: "bg-red-100", text: "text-red-700" },
-                      high: { bg: "bg-orange-100", text: "text-orange-700" },
-                      medium: { bg: "bg-amber-100", text: "text-amber-700" },
-                      low: { bg: "bg-emerald-100", text: "text-emerald-700" },
-                    };
-                    const uc = urgencyColors[risk.urgency] || urgencyColors.medium;
-                    return (
-                      <div key={i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[11px] font-semibold text-slate-800">{risk.risk}</span>
+                    <div className="divide-y divide-[#27272a]">
+                      {config.detective_issues.map((issue, i) => {
+                        const sev = severityColors[issue.severity] || severityColors.info;
+                        return (
+                          <div key={i} className="flex items-start justify-between px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border ${sev.bg} ${sev.text} ${sev.border}`}>
+                                  <span className="h-1.5 w-1.5 rounded-full bg-current" />{issue.severity}
+                                </span>
+                                <span className="text-[11px] font-semibold text-[#f8fafc]">{issue.column}</span>
+                                <span className="text-[9px] text-[#a1a1aa] bg-[#27272a] px-1.5 py-0.5 rounded font-mono">{issue.type}</span>
+                              </div>
+                              <p className="text-[10px] text-[#a1a1aa] mt-0.5">{issue.count} of {issue.total} values ({issue.pct}%)</p>
+                              <p className="text-[10px] text-[#a1a1aa] mt-0.5 italic">{issue.suggested_fix}</p>
                             </div>
-                            <p className="text-[10px] text-slate-500 mt-0.5">{risk.mitigation}</p>
-                          </div>
-                          <div className="shrink-0 flex items-center gap-1.5">
-                            <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${uc.bg} ${uc.text}`}>{risk.urgency}</span>
-                            <span className="text-[9px] font-mono font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{risk.score}/9</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {config.decisions && config.decisions.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <Crosshair className="h-4 w-4 text-indigo-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Decision Points</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-indigo-200 text-indigo-600 bg-indigo-50 font-medium ml-1">{config.decisions.length} questions</Badge>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {config.decisions.map((d, i) => {
-                    const recColor = d.recommendation.startsWith("yes") ? "text-emerald-700" : d.recommendation.startsWith("no") ? "text-red-700" : "text-amber-700";
-                    const confColors: Record<string, string> = {
-                      high: "bg-emerald-100 text-emerald-700",
-                      medium: "bg-amber-100 text-amber-700",
-                      low: "bg-red-100 text-red-700",
-                    };
-                    return (
-                      <div key={i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                        <p className="text-[11px] font-semibold text-slate-800 mb-0.5">{d.question}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[10px] font-medium ${recColor}`}>{d.recommendation}</span>
-                          <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${confColors[d.confidence] || confColors.medium}`}>{d.confidence} confidence</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">{d.rationale}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {config.trends && config.trends.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <TrendIcon className="h-4 w-4 text-cyan-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Trend Analysis</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-cyan-200 text-cyan-600 bg-cyan-50 font-medium ml-1">{config.trends.length} metrics</Badge>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
-                  {config.trends.map((t, i) => {
-                    const dirColor = t.direction === "up" ? "text-emerald-600" : t.direction === "down" ? "text-red-600" : "text-slate-500";
-                    const statusBg = t.status === "improving" ? "bg-emerald-50" : t.status === "declining" ? "bg-red-50" : "bg-slate-50";
-                    return (
-                      <div key={i} className={`rounded-lg border border-slate-100 ${statusBg} p-2.5`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-semibold text-slate-700">{t.metric}</span>
-                          <span className={`text-[9px] font-medium ${dirColor}`}>
-                            {t.direction === "up" ? "↗" : t.direction === "down" ? "↘" : "→"} {t.change_pct > 0 ? "+" : ""}{t.change_pct.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-[9px] text-slate-500">
-                          <span>Current: <b className="text-slate-700">{t.current}</b></span>
-                          <span>Avg: <b className="text-slate-700">{t.average}</b></span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {config.benchmarks && config.benchmarks.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <Target className="h-4 w-4 text-emerald-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Performance vs Benchmark</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-emerald-200 text-emerald-600 bg-emerald-50 font-medium ml-1">{config.benchmarks.length} metrics</Badge>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {config.benchmarks.map((b, i) => {
-                    const isAbove = b.status === "above";
-                    const pct = b.benchmark > 0 ? Math.min(100, (b.value / b.benchmark) * 100) : 0;
-                    return (
-                      <div key={i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-semibold text-slate-700">{b.metric}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-500">Target: <b className="text-slate-700">{b.benchmark.toLocaleString()}</b></span>
-                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${isAbove ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                              {isAbove ? "✓ Above" : "↓ Below"}
+                            <span className="shrink-0 ml-3 inline-flex items-center gap-1 text-[9px] font-medium text-[#a1a1aa] bg-[#27272a] px-1.5 py-0.5 rounded">
+                              <Activity className="h-2.5 w-2.5" /> {issue.confidence}%
                             </span>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-700 ${isAbove ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-amber-400 to-amber-500"}`}
-                              style={{ width: `${Math.max(pct, 3)}%` }}
-                            />
-                          </div>
-                          <span className="text-[9px] font-mono font-semibold text-slate-600 w-12 text-right">{typeof b.value === "number" ? b.value.toLocaleString() : b.value}</span>
-                        </div>
-                        <p className="text-[9px] text-slate-500 italic">{b.note}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {config.action_items && config.action_items.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <ClipboardList className="h-4 w-4 text-orange-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Action Items</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-orange-200 text-orange-600 bg-orange-50 font-medium ml-1">{config.action_items.length} items</Badge>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {config.action_items.map((item, i) => {
-                    const impactColors: Record<string, string> = {
-                      high: "bg-emerald-100 text-emerald-700",
-                      medium: "bg-amber-100 text-amber-700",
-                      low: "bg-blue-100 text-blue-700",
-                    };
-                    const urgencyColors: Record<string, string> = {
-                      immediate: "bg-red-100 text-red-700",
-                      high: "bg-orange-100 text-orange-700",
-                      medium: "bg-amber-100 text-amber-700",
-                      low: "bg-slate-100 text-slate-600",
-                    };
-                    return (
-                      <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition-colors">
-                        <span className="text-[10px] font-mono font-bold text-slate-400 w-5">{item.priority}</span>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[11px] font-medium text-slate-800">{item.action}</span>
-                        </div>
-                        <div className="shrink-0 flex items-center gap-1">
-                          <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${impactColors[item.impact] || impactColors.low}`}>{item.impact}</span>
-                          <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${urgencyColors[item.urgency] || urgencyColors.low}`}>{item.urgency}</span>
-                          <span className="text-[8px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded">{item.category}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {config.feature_importance && config.feature_importance.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-100">
-                  <Activity className="h-4 w-4 text-blue-500" />
-                  <h2 className="text-sm font-semibold text-slate-800">Feature Importance</h2>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-blue-200 text-blue-600 bg-blue-50 font-medium ml-1">{config.feature_importance.length}</Badge>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-1.5">
-                    {config.feature_importance.slice(0, 10).map((fi, i) => {
-                      const pct = fi.importance * 100;
-                      const sel = selectedFeature === fi.feature;
-                      return (
-                        <div key={fi.feature}>
-                          <div className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer transition-all ${sel ? "bg-blue-50 ring-1 ring-blue-200" : "hover:bg-slate-50"}`}
-                            onClick={() => setSelectedFeature(sel ? null : fi.feature)}>
-                            <span className="text-[10px] font-mono text-slate-400 w-5">{i + 1}</span>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-[11px] font-medium text-slate-700 truncate">{fi.feature}</span>
-                                <span className="text-[10px] font-mono font-semibold text-slate-500">{pct.toFixed(1)}%</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div className={`h-full rounded-full transition-all duration-500 ${fi.direction === "pos" ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-red-400 to-red-500"}`}
-                                  style={{ width: `${Math.max(pct, 2)}%` }} />
-                              </div>
-                            </div>
-                            <div className={`h-5 w-5 rounded flex items-center justify-center text-[8px] font-bold ${fi.direction === "pos" ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"}`}>
-                              {fi.direction === "pos" ? "+" : "-"}
-                            </div>
-                          </div>
-                          {sel && (
-                            <div className="mx-2 mb-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 text-[10px] text-slate-600 leading-relaxed animate-fadeIn">
-                              <span className="font-semibold text-blue-700">{fi.feature}</span> contributes <span className="font-semibold">{pct.toFixed(1)}%</span> to predictive power.
-                              {fi.direction === "pos" ? " Higher values positively impact the target." : " Higher values negatively impact the target."}
-                              {i === 0 && " This is the single most important feature."}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {config.insights && config.insights.length > 0 && (
-              <div className="rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-3 shadow-sm">
-                <div className="flex items-start gap-2">
-                  <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 mt-0.5 shadow-sm"><Lightbulb className="h-3 w-3 text-white" /></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold text-amber-800 mb-1">Key Insights <span className="font-normal text-amber-500">({config.insights.length})</span></p>
-                    <div className="space-y-0.5">{config.insights.map((ins, i) => (<p key={i} className="text-[10px] text-amber-700 leading-relaxed flex items-start gap-1"><span className="font-bold text-amber-500 mt-px shrink-0">◆</span><span>{ins}</span></p>))}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentSections.map((section) => {
-              const secCharts = section.charts.filter(i => i < allCharts.length).map(i => allCharts[i]);
-              if (secCharts.length === 0) return null;
-              const SectionIcon = section.title === "Data Distributions" ? BarChart3 :
-                section.title === "Outlier Analysis" ? Activity :
-                section.title === "Categorical Analysis" ? PieChart :
-                section.title === "Correlation Matrix" ? Grid3X3 :
-                section.title === "Time Trends" ? TrendingUp :
-                section.title === "Relationships" ? ScatterChart :
-                section.title === "ML Dashboard" ? Zap :
-                section.title === "Predictions" ? Target :
-                section.title === "Data Quality" ? Shield : Layers;
-              return (
-                <div key={section.title} className="space-y-2">
-                  <div className="flex items-center gap-2 px-0.5">
-                    <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-sm">
-                      <SectionIcon className="h-3 w-3 text-slate-500" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <h2 className="text-xs font-semibold text-slate-800">{section.title}</h2>
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-slate-200 text-slate-500 bg-slate-50 font-medium">{secCharts.length}</Badge>
-                      </div>
-                      {section.description && <p className="text-[9px] text-slate-400 mt-px">{section.description}</p>}
+                        );
+                      })}
                     </div>
                   </div>
-                  <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
-                    {secCharts.map((chart: any, ci: number) => {
-                      const ct = chartTypeBadge[chart.type] || { label: chart.type, color: "bg-slate-100 text-slate-700 border-slate-200" };
-                      return (
-                        <Card key={ci} className="border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white overflow-hidden">
-                          <div className="flex items-center justify-between px-3 pt-2 pb-1 border-b border-slate-50">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className={`inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium border uppercase tracking-wider ${ct.color}`}>{ct.label}</span>
-                              <h3 className="text-[11px] font-semibold text-slate-700 truncate">{chart.title}</h3>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0 ml-1.5">
-                              {chart.x && <span className="text-[8px] text-slate-400 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 font-mono">{chart.x}</span>}
-                              {chart.y && <span className="text-[8px] text-slate-400 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 font-mono">{chart.y}</span>}
-                            </div>
+                )}
+
+                {/* Recommendations */}
+                {config.recommendations && config.recommendations.length > 0 && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <ListChecks className="h-4 w-4 text-violet-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Recommendations</h2>
+                    </div>
+                    <div className="divide-y divide-[#27272a]">
+                      {config.recommendations.map((rec, i) => (
+                        <div key={i} className="flex items-start gap-3 px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
+                          <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${rec.impact === "high" ? "bg-emerald-500/20 text-emerald-400" : rec.impact === "medium" ? "bg-amber-500/20 text-amber-400" : "bg-blue-500/20 text-blue-400"}`}>
+                            <CheckCircle2 className="h-3 w-3" />
                           </div>
-                          <CardContent className="p-1">
-                            {chart.plotly ? (
-                              <Plot
-                                data={chart.plotly.data}
-                                layout={{ ...chart.plotly.layout, height: 320, margin: chart.plotly.layout?.margin || { t: 40, b: 55, l: 60, r: 18 } }}
-                                config={{ responsive: true, displayModeBar: false, scrollZoom: false }}
-                                className="w-full" useResizeHandler
-                              />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-medium text-[#f8fafc]">{rec.action}</span>
+                              <Badge variant="outline" className={`text-[8px] px-1 py-0 h-3 font-medium border ${rec.impact === "high" ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/10" : rec.impact === "medium" ? "border-amber-500/20 text-amber-400 bg-amber-500/10" : "border-blue-500/20 text-blue-400 bg-blue-500/10"}`}>{rec.impact}</Badge>
+                            </div>
+                            <p className="text-[10px] text-[#a1a1aa] mt-0.5">{rec.reason}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Data Story */}
+                {config.story_segments && config.story_segments.length > 0 && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <BookOpen className="h-4 w-4 text-[#6366f1]" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Data Story</h2>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {config.story_segments.map((seg, i) => (
+                        <div key={i} className="relative pl-5 border-l-2 border-[#6366f1]/30 pb-1 last:pb-0">
+                          <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-[#6366f1] flex items-center justify-center text-[7px] text-white font-bold">{i + 1}</div>
+                          <p className="text-[11px] font-semibold text-[#6366f1] mb-0.5">{seg.chapter}</p>
+                          <p className="text-[11px] text-[#a1a1aa] leading-relaxed">{seg.narrative}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Business Sections */}
+                {config.executive_summary && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <FileSearch className="h-4 w-4 text-[#4f46e5]" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Executive Summary</h2>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-[12px] text-[#a1a1aa] leading-relaxed">{config.executive_summary}</p>
+                    </div>
+                  </div>
+                )}
+
+                {config.swot && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <Crosshair className="h-4 w-4 text-violet-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">SWOT Analysis</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+                      {([
+                        { key: "strengths", label: "Strengths", color: "emerald", icon: "✓" },
+                        { key: "weaknesses", label: "Weaknesses", color: "red", icon: "✗" },
+                        { key: "opportunities", label: "Opportunities", color: "blue", icon: "→" },
+                        { key: "threats", label: "Threats", color: "amber", icon: "⚠" },
+                      ] as const).map(({ key, label, color, icon }) => {
+                        const items = config.swot![key];
+                        const colorMap: Record<string, { bg: string; text: string; header: string }> = {
+                          emerald: { bg: "bg-emerald-500/5", text: "text-emerald-300", header: "text-emerald-400" },
+                          red: { bg: "bg-red-500/5", text: "text-red-300", header: "text-red-400" },
+                          blue: { bg: "bg-blue-500/5", text: "text-blue-300", header: "text-blue-400" },
+                          amber: { bg: "bg-amber-500/5", text: "text-amber-300", header: "text-amber-400" },
+                        };
+                        const c = colorMap[color];
+                        return (
+                          <div key={key} className={`rounded-lg border border-[#27272a] ${c.bg} p-3`}>
+                            <p className={`text-[11px] font-bold ${c.header} mb-1.5 uppercase tracking-wider`}>{label}</p>
+                            {items.length > 0 ? (
+                              <ul className="space-y-1">
+                                {items.map((item, j) => (
+                                  <li key={j} className={`text-[10px] ${c.text} leading-relaxed flex items-start gap-1`}>
+                                    <span className="font-bold mt-px shrink-0">{icon}</span>
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             ) : (
-                              <div className="h-[320px] flex items-center justify-center bg-slate-50 rounded-lg border border-slate-100">
-                                <div className="text-center"><BarChart3 className="h-8 w-8 text-slate-300 mx-auto mb-2" /><p className="text-xs text-slate-400 font-medium">{chart.type}: {chart.title}</p></div>
-                              </div>
+                              <p className={`text-[10px] ${c.text} italic opacity-60`}>No {key} identified</p>
                             )}
-                          </CardContent>
-                          {chart.description && (
-                            <div className="px-3 pb-2 pt-0.5"><p className="text-[9px] text-slate-500 leading-relaxed">{chart.description}</p></div>
-                          )}
-                        </Card>
-                      );
-                    })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {config.risks && config.risks.length > 0 && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <ShieldAlert className="h-4 w-4 text-red-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Risk Assessment</h2>
+                    </div>
+                    <div className="divide-y divide-[#27272a]">
+                      {config.risks.map((risk, i) => {
+                        const urgencyColors: Record<string, { bg: string; text: string }> = {
+                          immediate: { bg: "bg-red-500/10", text: "text-red-400" },
+                          high: { bg: "bg-orange-500/10", text: "text-orange-400" },
+                          medium: { bg: "bg-amber-500/10", text: "text-amber-400" },
+                          low: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
+                        };
+                        const uc = urgencyColors[risk.urgency] || urgencyColors.medium;
+                        return (
+                          <div key={i} className="px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[11px] font-semibold text-[#f8fafc]">{risk.risk}</span>
+                                <p className="text-[10px] text-[#a1a1aa] mt-0.5">{risk.mitigation}</p>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${uc.bg} ${uc.text}`}>{risk.urgency}</span>
+                                <span className="text-[9px] font-mono font-semibold text-[#a1a1aa] bg-[#27272a] px-1.5 py-0.5 rounded">{risk.score}/9</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {config.decisions && config.decisions.length > 0 && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <Crosshair className="h-4 w-4 text-[#6366f1]" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Decision Points</h2>
+                    </div>
+                    <div className="divide-y divide-[#27272a]">
+                      {config.decisions.map((d, i) => {
+                        const recColor = d.recommendation.startsWith("yes") ? "text-emerald-400" : d.recommendation.startsWith("no") ? "text-red-400" : "text-amber-400";
+                        const confColors: Record<string, string> = {
+                          high: "bg-emerald-500/10 text-emerald-400",
+                          medium: "bg-amber-500/10 text-amber-400",
+                          low: "bg-red-500/10 text-red-400",
+                        };
+                        return (
+                          <div key={i} className="px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
+                            <p className="text-[11px] font-semibold text-[#f8fafc] mb-0.5">{d.question}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`text-[10px] font-medium ${recColor}`}>{d.recommendation}</span>
+                              <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${confColors[d.confidence] || confColors.medium}`}>{d.confidence} confidence</span>
+                            </div>
+                            <p className="text-[10px] text-[#a1a1aa] mt-1 leading-relaxed">{d.rationale}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {config.trends && config.trends.length > 0 && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <TrendIcon className="h-4 w-4 text-cyan-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Trend Analysis</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
+                      {config.trends.map((t, i) => {
+                        const dirColor = t.direction === "up" ? "text-emerald-400" : t.direction === "down" ? "text-red-400" : "text-[#a1a1aa]";
+                        return (
+                          <div key={i} className="rounded-lg border border-[#27272a] bg-[#0f0f11] p-2.5">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-semibold text-[#f8fafc]">{t.metric}</span>
+                              <span className={`text-[9px] font-medium ${dirColor}`}>
+                                {t.direction === "up" ? "↗" : t.direction === "down" ? "↘" : "→"} {t.change_pct > 0 ? "+" : ""}{t.change_pct.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[9px] text-[#a1a1aa]">
+                              <span>Current: <b className="text-[#f8fafc]">{t.current}</b></span>
+                              <span>Avg: <b className="text-[#f8fafc]">{t.average}</b></span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {config.benchmarks && config.benchmarks.length > 0 && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <Target className="h-4 w-4 text-emerald-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Performance vs Benchmark</h2>
+                    </div>
+                    <div className="divide-y divide-[#27272a]">
+                      {config.benchmarks.map((b, i) => {
+                        const isAbove = b.status === "above";
+                        const pct = b.benchmark > 0 ? Math.min(100, (b.value / b.benchmark) * 100) : 0;
+                        return (
+                          <div key={i} className="px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-semibold text-[#f8fafc]">{b.metric}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-[#a1a1aa]">Target: <b className="text-[#f8fafc]">{b.benchmark.toLocaleString()}</b></span>
+                                <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${isAbove ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                                  {isAbove ? "✓ Above" : "↓ Below"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 mb-1">
+                              <div className="flex-1 h-1.5 rounded-full bg-[#27272a] overflow-hidden">
+                                <div className={`h-full rounded-full transition-all duration-700 ${isAbove ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.max(pct, 3)}%` }} />
+                              </div>
+                              <span className="text-[9px] font-mono font-semibold text-[#a1a1aa] w-12 text-right">{typeof b.value === "number" ? b.value.toLocaleString() : b.value}</span>
+                            </div>
+                            <p className="text-[9px] text-[#a1a1aa] italic">{b.note}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {config.action_items && config.action_items.length > 0 && selectedSection === null && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <ClipboardList className="h-4 w-4 text-orange-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Action Items</h2>
+                    </div>
+                    <div className="divide-y divide-[#27272a]">
+                      {config.action_items.map((item, i) => {
+                        const impactColors: Record<string, string> = {
+                          high: "bg-emerald-500/10 text-emerald-400",
+                          medium: "bg-amber-500/10 text-amber-400",
+                          low: "bg-blue-500/10 text-blue-400",
+                        };
+                        const urgencyColors: Record<string, string> = {
+                          immediate: "bg-red-500/10 text-red-400",
+                          high: "bg-orange-500/10 text-orange-400",
+                          medium: "bg-amber-500/10 text-amber-400",
+                          low: "bg-[#27272a] text-[#a1a1aa]",
+                        };
+                        return (
+                          <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-[#0f0f11] transition-colors">
+                            <span className="text-[10px] font-mono font-bold text-[#a1a1aa] w-5">{item.priority}</span>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[11px] font-medium text-[#f8fafc]">{item.action}</span>
+                            </div>
+                            <div className="shrink-0 flex items-center gap-1">
+                              <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${impactColors[item.impact] || impactColors.low}`}>{item.impact}</span>
+                              <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${urgencyColors[item.urgency] || urgencyColors.low}`}>{item.urgency}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {config.feature_importance && config.feature_importance.length > 0 && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <Activity className="h-4 w-4 text-[#4f46e5]" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Feature Importance</h2>
+                    </div>
+                    <div className="p-4">
+                      <div className="space-y-1.5">
+                        {config.feature_importance.slice(0, 10).map((fi, i) => {
+                          const pct = fi.importance * 100;
+                          const sel = selectedFeature === fi.feature;
+                          return (
+                            <div key={fi.feature}>
+                              <div className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer transition-all ${sel ? "bg-[#6366f1]/10 border border-[#6366f1]/20" : "hover:bg-[#0f0f11]"}`}
+                                onClick={() => setSelectedFeature(sel ? null : fi.feature)}>
+                                <span className="text-[10px] font-mono text-[#a1a1aa] w-5">{i + 1}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-[11px] font-medium text-[#f8fafc] truncate">{fi.feature}</span>
+                                    <span className="text-[10px] font-mono font-semibold text-[#a1a1aa]">{pct.toFixed(1)}%</span>
+                                  </div>
+                                  <div className="h-1.5 rounded-full bg-[#27272a] overflow-hidden">
+                                    <div className={`h-full rounded-full transition-all duration-500 ${fi.direction === "pos" ? "bg-emerald-500" : "bg-red-500"}`}
+                                      style={{ width: `${Math.max(pct, 2)}%` }} />
+                                  </div>
+                                </div>
+                                <div className={`h-5 w-5 rounded flex items-center justify-center text-[8px] font-bold ${fi.direction === "pos" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
+                                  {fi.direction === "pos" ? "+" : "-"}
+                                </div>
+                              </div>
+                              {sel && (
+                                <div className="mx-2 mb-1.5 px-3 py-2 rounded-lg bg-[#6366f1]/5 border border-[#6366f1]/10 text-[10px] text-[#a1a1aa] leading-relaxed">
+                                  <span className="font-semibold text-[#6366f1]">{fi.feature}</span> contributes <span className="font-semibold">{pct.toFixed(1)}%</span> to predictive power.
+                                  {fi.direction === "pos" ? " Higher values positively impact the target." : " Higher values negatively impact the target."}
+                                  {i === 0 && " This is the single most important feature."}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {config.insights && config.insights.length > 0 && (
+                  <div className="rounded-xl border border-[#f59e0b]/20 bg-[#f59e0b]/5 p-3">
+                    <div className="flex items-start gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-[#f59e0b]/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <Lightbulb className="h-3 w-3 text-[#f59e0b]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold text-[#f59e0b] mb-1">Key Insights <span className="font-normal text-[#f59e0b]/60">({config.insights.length})</span></p>
+                        <div className="space-y-0.5">{config.insights.map((ins, i) => (<p key={i} className="text-[10px] text-[#f59e0b]/80 leading-relaxed flex items-start gap-1"><span className="font-bold text-[#f59e0b]/50 mt-px shrink-0">◆</span><span>{ins}</span></p>))}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Charts */}
+                {currentSections.map((section) => {
+                  const secCharts = section.charts.filter(i => i < allCharts.length).map(i => allCharts[i]);
+                  if (secCharts.length === 0) return null;
+                  const SectionIcon = section.title === "Data Distributions" ? BarChart3 :
+                    section.title === "Outlier Analysis" ? Activity :
+                    section.title === "Categorical Analysis" ? PieChart :
+                    section.title === "Correlation Matrix" ? Grid3X3 :
+                    section.title === "Time Trends" ? TrendingUp :
+                    section.title === "Relationships" ? ScatterChart :
+                    section.title === "ML Dashboard" ? Zap :
+                    section.title === "Predictions" ? Target :
+                    section.title === "Data Quality" ? Shield : Layers;
+                  return (
+                    <div key={section.title} id={`section-${section.title.replace(/\s+/g, "-")}`} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-lg bg-[#27272a] flex items-center justify-center">
+                          <SectionIcon className="h-3 w-3 text-[#a1a1aa]" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h2 className="text-xs font-semibold text-[#f8fafc]">{section.title}</h2>
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-[#27272a] text-[#a1a1aa] bg-[#18181b] font-medium">{secCharts.length}</Badge>
+                          </div>
+                          {section.description && <p className="text-[9px] text-[#a1a1aa] mt-px">{section.description}</p>}
+                        </div>
+                      </div>
+                      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                        {secCharts.map((chart: any, ci: number) => {
+                          const ct = chartTypeBadge[chart.type] || { label: chart.type, color: "bg-[#27272a] text-[#a1a1aa] border-[#27272a]" };
+                          return (
+                            <Card key={ci} className="border-[#27272a] bg-[#18181b] shadow-none hover:border-[#3f3f46] transition-all duration-200 overflow-hidden">
+                              <div className="flex items-center justify-between px-3 pt-2 pb-1 border-b border-[#27272a]">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className={`inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium border uppercase tracking-wider ${ct.color}`}>{ct.label}</span>
+                                  <h3 className="text-[11px] font-semibold text-[#f8fafc] truncate">{chart.title}</h3>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0 ml-1.5">
+                                  {chart.x && <span className="text-[8px] text-[#a1a1aa] bg-[#27272a] px-1 py-0.5 rounded border border-[#27272a] font-mono">{chart.x}</span>}
+                                  {chart.y && <span className="text-[8px] text-[#a1a1aa] bg-[#27272a] px-1 py-0.5 rounded border border-[#27272a] font-mono">{chart.y}</span>}
+                                </div>
+                              </div>
+                              <CardContent className="p-1">
+                                {chart.plotly ? (
+                                  <Plot
+                                    data={chart.plotly.data}
+                                    layout={{ ...chart.plotly.layout, height: 320, margin: chart.plotly.layout?.margin || { t: 40, b: 55, l: 60, r: 18 } }}
+                                    config={{ responsive: true, displayModeBar: false, scrollZoom: false }}
+                                    className="w-full" useResizeHandler
+                                  />
+                                ) : (
+                                  <div className="h-[320px] flex items-center justify-center bg-[#0f0f11] rounded-lg border border-[#27272a]">
+                                    <div className="text-center"><BarChart3 className="h-8 w-8 text-[#27272a] mx-auto mb-2" /><p className="text-xs text-[#a1a1aa] font-medium">{chart.type}: {chart.title}</p></div>
+                                  </div>
+                                )}
+                              </CardContent>
+                              {chart.description && (
+                                <div className="px-3 pb-2 pt-0.5"><p className="text-[9px] text-[#a1a1aa] leading-relaxed">{chart.description}</p></div>
+                              )}
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Data Quality */}
+                {config.data_quality && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <Shield className="h-4 w-4 text-emerald-400" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Data Quality</h2>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-emerald-500/20 text-emerald-400 bg-emerald-500/10 font-medium">{config.data_quality.overall}/100</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 p-4">
+                      {[
+                        { label: "Completeness", value: config.data_quality.completeness, color: "#4f46e5" },
+                        { label: "Consistency", value: config.data_quality.consistency, color: "#22c55e" },
+                        { label: "Uniqueness", value: config.data_quality.uniqueness, color: "#f59e0b" },
+                        { label: "Validity", value: config.data_quality.validity, color: "#8b5cf6" },
+                        { label: "Accuracy", value: config.data_quality.accuracy, color: "#ec4899" },
+                      ].map((m) => (
+                        <div key={m.label} className="text-center p-3 rounded-xl bg-[#0f0f11] border border-[#27272a]">
+                          <div className="relative h-16 w-16 mx-auto mb-2">
+                            <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
+                              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="3" />
+                              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={m.color} strokeWidth="3" strokeDasharray={`${m.value}, 100`} strokeLinecap="round" />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center"><span className="text-sm font-bold text-[#f8fafc]">{m.value}%</span></div>
+                          </div>
+                          <p className="text-[10px] font-medium text-[#a1a1aa]">{m.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Filters */}
+                {config.filters && config.filters.length > 0 && (
+                  <Card className="border-[#27272a] bg-[#18181b]">
+                    <CardHeader className="pb-1.5 pt-2.5 px-3">
+                      <div className="flex items-center gap-1.5">
+                        <Filter className="h-3 w-3 text-[#a1a1aa]" />
+                        <CardTitle className="text-[11px] font-semibold text-[#f8fafc]">Cross-Filtering</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-2.5">
+                      <div className="flex flex-wrap gap-1">
+                        {config.filters.map((f, i) => {
+                          const active = activeFilters[f.column] && activeFilters[f.column].length > 0;
+                          return (
+                            <Badge key={i} variant="outline"
+                              className={`text-[9px] px-1.5 py-0.5 font-medium cursor-pointer transition-all ${active ? "bg-[#6366f1]/10 text-[#6366f1] border-[#6366f1]/20" : "bg-[#27272a] text-[#a1a1aa] border-[#27272a] hover:bg-[#3f3f46]"}`}
+                              onClick={() => setActiveFilters(p => { const n = { ...p }; if (active) delete n[f.column]; else n[f.column] = ["filtered"]; return n; })}>
+                              {f.column}
+                              <span className="ml-0.5 font-normal text-[#a1a1aa]/60">({f.type})</span>
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                      {Object.keys(activeFilters).length > 0 && (
+                        <Button variant="ghost" size="sm" onClick={() => setActiveFilters({})} className="mt-1.5 text-[9px] h-4 px-1.5 text-[#a1a1aa] hover:text-[#f8fafc]">Clear all filters</Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Right Sidebar */}
+              <div className="space-y-4">
+                {/* Today's Insights */}
+                {sidebarInsights.length > 0 && (
+                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                      <Lightbulb className="h-4 w-4 text-[#f59e0b]" />
+                      <h2 className="text-sm font-semibold text-[#f8fafc]">Today's Insights</h2>
+                    </div>
+                    <div className="divide-y divide-[#27272a]">
+                      {sidebarInsights.map((insight, i) => {
+                        const actionStyle = actionBadgeColors[insight.action] || "bg-[#27272a] text-[#a1a1aa] border-[#27272a]";
+                        return (
+                          <div key={i} className="px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
+                            <p className="text-[11px] text-[#a1a1aa] leading-relaxed mb-1.5">{insight.text}</p>
+                            <div className="flex items-center justify-between">
+                              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${actionStyle}`}>{insight.action}</span>
+                              <ChevronRight className="h-3 w-3 text-[#a1a1aa]" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Copilot */}
+                <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
+                    <MessageCircle className="h-4 w-4 text-[#6366f1]" />
+                    <h2 className="text-sm font-semibold text-[#f8fafc]">AI Copilot</h2>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div className="rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/20 p-3">
+                      <p className="text-[11px] text-[#6366f1] leading-relaxed">Ask me anything about your data. I can help you explore patterns, generate insights, and create visualizations.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] text-[#a1a1aa] uppercase tracking-wider font-medium">Suggested questions</p>
+                      {["What are the key trends?", "Show me outliers", "Summarize the data", "Compare categories"].map((q, i) => (
+                        <Link key={i} href={`/datasets/${datasetId}/chat?q=${encodeURIComponent(q)}`}>
+                          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[#27272a] hover:border-[#3f3f46] hover:bg-[#0f0f11] transition-all cursor-pointer">
+                            <span className="text-[10px] text-[#a1a1aa]">{q}</span>
+                            <ChevronRight className="h-2.5 w-2.5 text-[#a1a1aa] ml-auto" />
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                    <Link href={`/datasets/${datasetId}/chat`}>
+                      <Button variant="outline" className="w-full gap-1.5 border-[#27272a] text-[#a1a1aa] hover:bg-[#0f0f11] hover:text-[#f8fafc] h-8 text-[11px]">
+                        <MessageCircle className="h-3 w-3" />Open Copilot
+                      </Button>
+                    </Link>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            </div>
 
-            {config.filters && config.filters.length > 0 && (
-              <Card className="border-slate-200 shadow-sm bg-white">
-                <CardHeader className="pb-1.5 pt-2.5 px-3">
-                  <div className="flex items-center gap-1.5">
-                    <Filter className="h-3 w-3 text-slate-400" />
-                    <CardTitle className="text-[11px] font-semibold text-slate-700">Cross-Filtering</CardTitle>
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-slate-200 text-slate-500 bg-slate-50 font-medium ml-0.5">{config.filters.length}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-3 pb-2.5">
-                  <div className="flex flex-wrap gap-1">
-                    {config.filters.map((f, i) => {
-                      const active = activeFilters[f.column] && activeFilters[f.column].length > 0;
-                      return (
-                        <Badge key={i} variant="outline"
-                          className={`text-[9px] px-1.5 py-0.5 font-medium cursor-pointer transition-all ${active ? "bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-200" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"}`}
-                          onClick={() => setActiveFilters(p => { const n = { ...p }; if (active) delete n[f.column]; else n[f.column] = ["filtered"]; return n; })}>
-                          <Filter className={`h-2 w-2 mr-0.5 ${active ? "text-blue-500" : "text-slate-400"}`} />
-                          {f.column}
-                          <span className="ml-0.5 font-normal text-slate-400">({f.type})</span>
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                  {Object.keys(activeFilters).length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => setActiveFilters({})} className="mt-1.5 text-[9px] h-4 px-1.5 text-slate-400 hover:text-slate-600">Clear all filters</Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="flex items-center justify-between text-[8px] text-slate-400 pb-3 pt-1 border-t border-slate-100">
+            {/* Footer */}
+            <div className="flex items-center justify-between text-[8px] text-[#a1a1aa] pb-3 pt-1 border-t border-[#27272a]">
               <span>Executive Dashboard · {totalCharts} charts · {totalKpis} KPIs · {sections.length} sections{config.data_quality ? ` · DQ: ${config.data_quality.overall}/100` : ""}{config.ai_health_score != null ? ` · Health: ${config.ai_health_score}/100` : ""}</span>
               <span>AI-powered · Generated {new Date().toLocaleDateString()}</span>
             </div>
@@ -811,11 +837,11 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
         )}
 
         {generateMutation.isError && (
-          <Card className="mt-4 border-red-200 bg-red-50 shadow-sm">
+          <Card className="mt-4 border-red-500/20 bg-red-500/5 shadow-none">
             <CardContent className="p-3">
               <div className="flex items-start gap-2">
-                <div className="h-4 w-4 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5"><span className="text-[8px] font-bold text-red-600">!</span></div>
-                <p className="text-xs text-red-700">Error: {generateMutation.error instanceof Error ? generateMutation.error.message : "Failed to generate dashboard."}</p>
+                <div className="h-4 w-4 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-[8px] font-bold text-red-400">!</span></div>
+                <p className="text-xs text-red-400">Error: {generateMutation.error instanceof Error ? generateMutation.error.message : "Failed to generate dashboard."}</p>
               </div>
             </CardContent>
           </Card>
@@ -823,7 +849,10 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
       </main>
 
       <style jsx global>{`
-        @media print { body { background: white !important; } .print\\:hidden { display: none !important; } }
+        @media print { body { background: #09090b !important; } .print\\:hidden { display: none !important; } }
+        body.printing-dashboard header { display: none !important; }
+        body.printing-dashboard { background: #09090b !important; padding: 0 !important; margin: 0 !important; }
+        body.printing-dashboard * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
       `}</style>

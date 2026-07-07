@@ -95,7 +95,7 @@ class CopilotBrain:
             "cleaning", "eda", "summary", "qa", "business", "story",
             "dashboard", "timeseries", "ml", "optimizer", "notebook",
             "deploy", "edit", "report", "workflow",
-            "goal", "confidence", "playground", "simulation", "lineage", "marketplace",
+            "goal", "confidence", "playground", "simulation", "lineage", "marketplace", "multisheet",
         ]
 
         context_str = f"Dataset: {ctx.dataset_name}, Cleaned: {ctx.cleaned}, EDA: {ctx.eda_completed}, ML: {ctx.ml_completed}"
@@ -123,6 +123,7 @@ New specialized tools:
 - "lineage": User says "show what was done to my data", "data history"
 - "marketplace": User says "find more data", "suggest datasets", "enrich my data"
 - "alerting": User says "show insights", "what's changed", "alerts"
+- "multisheet": User says "analyze sheets", "merge sheets", "multi-sheet workbook", "sheet relationships", "classify sheets" — detects every sheet, classifies, finds relationships, recommends workflow
 
 Return JSON with:
 - "action": one of "invoke_tool", "plan", "run_all", "chat"
@@ -181,6 +182,8 @@ Return ONLY valid JSON."""
             return {"action": "invoke_tool", "tool": "simulation", "params": {"scenario": message}}
         if any(w in lower for w in ["alert", "insight", "notification", "proactive"]):
             return {"action": "invoke_tool", "tool": "alerting", "params": {}}
+        if any(w in lower for w in ["multisheet", "multi sheet", "multi-sheet", "merge sheets", "join sheets", "combine sheets", "sheets in this", "workbook", "multiple sheets", "sheet relationship", "sheet classification", "all sheets", "each sheet"]):
+            return {"action": "invoke_tool", "tool": "multisheet", "params": {}}
         if any(w in lower for w in ["playground", "compare models", "compare algorithms", "which model"]):
             return {"action": "invoke_tool", "tool": "playground", "params": {}}
         if any(w in lower for w in ["notebook", "jupyter"]):
@@ -253,6 +256,7 @@ Return ONLY valid JSON."""
         from app.tools.lineage_tool import lineage_tool
         from app.tools.marketplace_tool import marketplace_tool
         from app.tools.alerting_tool import alerting_tool
+        from app.tools.multisheet_tool import multisheet_tool
 
         async def ml_tool(dataset_id, df, params):
             from app.copilot.tools import ToolResult as TR
@@ -337,7 +341,7 @@ Return ONLY valid JSON."""
 
             dataset = await self.db.get(Dataset, dataset_id)
             eda_result = run_eda(df)
-            cleaning = json.loads(dataset.data_quality_report) if dataset.data_quality_report else None
+            cleaning = dataset.data_quality_report if isinstance(dataset.data_quality_report, dict) else (json.loads(dataset.data_quality_report) if dataset.data_quality_report else None)
             summary = {
                 "rows": len(df),
                 "columns": len(df.columns),
@@ -399,6 +403,7 @@ Return ONLY valid JSON."""
             "lineage": lineage_tool,
             "marketplace": marketplace_tool,
             "alerting": alerting_tool,
+            "multisheet": multisheet_tool,
         }
 
         tool_fn = tool_map.get(tool_name)

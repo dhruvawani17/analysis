@@ -1,19 +1,16 @@
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 
 from app.config import settings
 from app.api.routes import datasets, analysis, qa, ml, reports, copilot, dashboard
 from app.db.models import Base
-from app.api.deps import engine
+from app.db.session import engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield

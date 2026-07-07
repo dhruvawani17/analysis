@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, Brain, Loader2, Trophy, BarChart3, Target, Hash, Sparkles, Wand2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function extractText(item: any): string {
   if (typeof item === "string") return item;
@@ -54,27 +55,28 @@ export default function MLPage({
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-indigo-100 bg-white/70 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
         <div className="container mx-auto flex items-center gap-4 py-4 px-6">
           <Link href={`/datasets/${id}`}>
-            <Button variant="ghost" size="icon" className="rounded-xl hover:bg-indigo-50">
-              <ArrowLeft className="h-4 w-4 text-indigo-600" />
+            <Button variant="ghost" size="icon" className="rounded-xl hover:bg-accent">
+              <ArrowLeft className="h-4 w-4 text-primary" />
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br bg-primary flex items-center justify-center">
               <Brain className="h-4 w-4 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900">Auto ML</h1>
+            <h1 className="text-lg font-bold text-foreground">Auto ML</h1>
           </div>
-        </div>
+        <ThemeToggle />
+          </div>
       </header>
 
       <main className="container mx-auto px-6 py-6 max-w-5xl space-y-6">
         {/* Target Selection */}
-        <Card className="bg-white/80 border-indigo-100">
+        <Card className="bg-white/80 dark:bg-slate-900/80 border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Target className="h-5 w-5 text-violet-500" />
@@ -82,22 +84,22 @@ export default function MLPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500">
               Choose a column to predict. The system will automatically detect the problem type
               and train multiple models for comparison.
             </p>
 
             {colsLoading ? (
-              <div className="flex items-center gap-2 text-gray-500">
+              <div className="flex items-center gap-2 text-gray-500 dark:text-slate-400 dark:text-slate-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading columns...
               </div>
             ) : columns ? (
               <div className="flex items-end gap-4">
                 <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Target Column</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300 dark:text-slate-600">Target Column</label>
                   <Select value={targetColumn} onValueChange={(v) => v && setTargetColumn(v)}>
-                    <SelectTrigger className="border-indigo-200 focus:ring-indigo-500">
+                    <SelectTrigger className="border-indigo-200 dark:border-slate-700 focus:ring-indigo-500">
                       <SelectValue placeholder="Select a column to predict" />
                     </SelectTrigger>
                     <SelectContent>
@@ -110,7 +112,7 @@ export default function MLPage({
                               className={`text-[10px] ${
                                 col.problem_type === "classification"
                                   ? "border-violet-200 text-violet-600 bg-violet-50"
-                                  : "border-indigo-200 text-indigo-600 bg-indigo-50"
+                                  : "border-indigo-200 dark:border-slate-700 text-primary bg-indigo-50"
                               }`}
                             >
                               {col.problem_type === "classification" ? `${col.unique} classes` : col.dtype}
@@ -119,7 +121,7 @@ export default function MLPage({
                         </SelectItem>
                       ))}
                       {columns.eligible_columns.length === 0 && (
-                        <p className="px-2 py-1 text-xs text-gray-400">No eligible columns</p>
+                        <p className="px-2 py-1 text-xs text-gray-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">No eligible columns</p>
                       )}
                     </SelectContent>
                   </Select>
@@ -127,7 +129,7 @@ export default function MLPage({
                 <Button
                   onClick={() => trainMutation.mutate(targetColumn)}
                   disabled={!targetColumn || trainMutation.isPending}
-                  className="gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-200"
+                  className="gap-2 bg-gradient-to-r bg-primary hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-200"
                 >
                   {trainMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -152,29 +154,29 @@ export default function MLPage({
           <>
             {/* Summary Cards */}
             <div className="grid gap-4 sm:grid-cols-3">
-              <Card className="bg-gradient-to-br from-violet-500 to-purple-500 text-white border-0 shadow-lg shadow-violet-200">
+              <Card className="bg-gradient-to-br bg-primary text-white border-0 shadow-lg shadow-violet-200">
                 <CardContent className="p-6 text-center">
                   <Trophy className="h-8 w-8 mx-auto mb-2 opacity-90" />
                   <p className="text-2xl font-bold">{result.best_model || "N/A"}</p>
                   <p className="text-xs text-violet-100 mt-1">Best Model</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white/80 border-indigo-100">
+              <Card className="bg-white/80 dark:bg-slate-900/80 border-border">
                 <CardContent className="p-6 text-center">
                   <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center mx-auto mb-2">
                     <BarChart3 className="h-5 w-5 text-indigo-500" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{result.best_score ?? "-"}</p>
-                  <p className="text-xs text-gray-500 mt-1">Best Score</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{result.best_score ?? "-"}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500 mt-1">Best Score</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white/80 border-indigo-100">
+              <Card className="bg-white/80 dark:bg-slate-900/80 border-border">
                 <CardContent className="p-6 text-center">
                   <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mx-auto mb-2">
                     <Hash className="h-5 w-5 text-violet-500" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{result.num_features}</p>
-                  <p className="text-xs text-gray-500 mt-1">Features</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{result.num_features}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500 mt-1">Features</p>
                 </CardContent>
               </Card>
             </div>
@@ -193,7 +195,7 @@ export default function MLPage({
                     <div className="mb-3">
                       <p className="text-xs font-medium text-violet-600 mb-1.5">Why these features?</p>
                       {result.feature_engineering.reasons.map((reason: string, i: number) => (
-                        <p key={i} className="text-sm text-gray-600">• {reason}</p>
+                        <p key={i} className="text-sm text-gray-600 dark:text-slate-400 dark:text-slate-500">• {reason}</p>
                       ))}
                     </div>
                   )}
@@ -209,7 +211,7 @@ export default function MLPage({
             )}
 
             {/* Model Comparison */}
-            <Card className="bg-white/80 border-indigo-100">
+            <Card className="bg-white/80 dark:bg-slate-900/80 border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Sparkles className="h-5 w-5 text-violet-500" />
@@ -219,7 +221,7 @@ export default function MLPage({
               <CardContent>
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-indigo-100">
+                    <TableRow className="border-border">
                       <TableHead className="text-indigo-700">Model</TableHead>
                       <TableHead className="text-indigo-700">Test Score</TableHead>
                       <TableHead className="text-indigo-700">CV Mean</TableHead>
@@ -232,14 +234,14 @@ export default function MLPage({
                       <TableRow
                         key={r.model}
                         className={`border-indigo-50 ${
-                          r.model === result.best_model ? "bg-gradient-to-r from-violet-50 to-purple-50" : "hover:bg-indigo-50/50"
+                          r.model === result.best_model ? "bg-gradient-to-r from-violet-50 to-purple-50" : "hover:bg-accent/50"
                         }`}
                       >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {r.model}
                             {r.model === result.best_model && (
-                              <Badge className="bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0 text-[10px]">
+                              <Badge className="bg-gradient-to-r bg-primary text-white border-0 text-[10px]">
                                 Best
                               </Badge>
                             )}
@@ -264,7 +266,7 @@ export default function MLPage({
                           {r.error ? (
                             <Badge variant="destructive" className="text-xs">Error</Badge>
                           ) : (
-                            <Badge className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">OK</Badge>
+                            <Badge className="text-xs bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200">OK</Badge>
                           )}
                         </TableCell>
                       </TableRow>
@@ -276,7 +278,7 @@ export default function MLPage({
 
             {/* Insights */}
             {result.insights && result.insights.length > 0 && (
-              <Card className="bg-white/80 border-indigo-100">
+              <Card className="bg-white/80 dark:bg-slate-900/80 border-border">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Sparkles className="h-5 w-5 text-amber-500" />
@@ -288,7 +290,7 @@ export default function MLPage({
                     {result.insights.map((insight: any, i: number) => (
                       <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
                         <span className="text-amber-500 mt-0.5">•</span>
-                        <span className="text-sm text-gray-700">{insight.message}</span>
+                        <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{insight.message}</span>
                       </div>
                     ))}
                   </div>
@@ -298,7 +300,7 @@ export default function MLPage({
 
             {/* LLM Analysis */}
             {result.llm_analysis && result.llm_analysis.summary && (
-              <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
+              <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Brain className="h-5 w-5 text-indigo-500" />
@@ -306,16 +308,16 @@ export default function MLPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <p className="text-sm leading-relaxed text-gray-700">{result.llm_analysis.summary}</p>
+                  <p className="text-sm leading-relaxed text-gray-700 dark:text-slate-300 dark:text-slate-600">{result.llm_analysis.summary}</p>
 
                   {result.llm_analysis.key_findings?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Key Findings</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-2">Key Findings</h4>
                       <div className="space-y-1.5">
                         {result.llm_analysis.key_findings.map((f: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/60 border border-indigo-100">
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/60 dark:bg-slate-900/60 border border-border">
                             <span className="text-indigo-500 mt-0.5">•</span>
-                            <span className="text-sm text-gray-700">{extractText(f)}</span>
+                            <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{extractText(f)}</span>
                           </div>
                         ))}
                       </div>
@@ -324,12 +326,12 @@ export default function MLPage({
 
                   {result.llm_analysis.predictions?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Scenario Predictions</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-2">Scenario Predictions</h4>
                       <div className="space-y-1.5">
                         {result.llm_analysis.predictions.map((p: any, i: number) => (
                           <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-emerald-50/50 border border-emerald-100">
                             <Target className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                            <span className="text-sm text-gray-700">{extractText(p)}</span>
+                            <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{extractText(p)}</span>
                           </div>
                         ))}
                       </div>
@@ -338,12 +340,12 @@ export default function MLPage({
 
                   {result.llm_analysis.recommendations?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Recommendations</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-2">Recommendations</h4>
                       <div className="space-y-1.5">
                         {result.llm_analysis.recommendations.map((r: any, i: number) => (
                           <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-violet-50/50 border border-violet-100">
                             <Sparkles className="h-3.5 w-3.5 text-violet-500 mt-0.5 shrink-0" />
-                            <span className="text-sm text-gray-700">{extractText(r)}</span>
+                            <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{extractText(r)}</span>
                           </div>
                         ))}
                       </div>
@@ -352,12 +354,12 @@ export default function MLPage({
 
                   {result.llm_analysis.risk_factors?.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Risk Factors</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-2">Risk Factors</h4>
                       <div className="space-y-1.5">
                         {result.llm_analysis.risk_factors.map((r: any, i: number) => (
                           <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
                             <span className="text-amber-500 mt-0.5">⚠</span>
-                            <span className="text-sm text-gray-700">{extractText(r)}</span>
+                            <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{extractText(r)}</span>
                           </div>
                         ))}
                       </div>

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import json
+import uuid
 
 from app.api.deps import get_db, get_dataset_or_404
 from app.db.models import Dataset
@@ -52,24 +53,30 @@ async def analyze_dataset(
 
     if dataset.cleaned_file_path:
         df_clean = load_dataframe(dataset.cleaned_file_path)
-        cleaning_report = json.loads(dataset.data_quality_report) if dataset.data_quality_report else {}
+        cleaning_report = dataset.data_quality_report if isinstance(dataset.data_quality_report, dict) else (json.loads(dataset.data_quality_report) if dataset.data_quality_report else {})
     else:
         df_clean, cleaning_report = clean_dataset(df)
 
     eda_result = run_eda(df_clean)
 
-    import uuid
-    cleaned_path = save_dataframe(df_clean, f"cleaned_{dataset.id}_{uuid.uuid4().hex[:8]}")
+    # Save cleaned parquet to S3
+    uid = str(dataset.user_id) if dataset.user_id else "default"
+    cleaned_path = save_dataframe(
+        df_clean,
+        f"cleaned_{dataset.id}_{uuid.uuid4().hex[:8]}",
+        user_id=uid,
+        folder="cleaned",
+    )
 
     try:
         ai_summary = await generate_ai_summary(eda_result)
     except Exception:
         ai_summary = "AI summary generation failed (check LLM provider configuration)."
 
-    dataset.data_quality_report = json.dumps(cleaning_report)
-    dataset.eda_summary = json.dumps(eda_result)
+    dataset.data_quality_report = cleaning_report
+    dataset.eda_summary = eda_result
     dataset.ai_summary = ai_summary
-    dataset.cleaned_file_path = str(cleaned_path)
+    dataset.cleaned_file_path = cleaned_path
     await db.commit()
 
     return {

@@ -97,10 +97,10 @@ class ConversationMemory:
             dataset_name=dataset.name,
             rows=dataset.row_count or 0,
             columns=dataset.column_count or 0,
-            column_names=json.loads(dataset.column_names) if dataset.column_names else [],
-            dtypes=json.loads(dataset.dtypes) if dataset.dtypes else {},
+            column_names=json.loads(dataset.column_names) if isinstance(dataset.column_names, str) else (dataset.column_names or []),
+            dtypes=json.loads(dataset.dtypes) if isinstance(dataset.dtypes, str) else (dataset.dtypes or {}),
             cleaned=dataset.cleaned_file_path is not None,
-            cleaning_report=json.loads(dataset.data_quality_report) if dataset.data_quality_report else {},
+            cleaning_report=json.loads(dataset.data_quality_report) if isinstance(dataset.data_quality_report, str) else (dataset.data_quality_report or {}),
         )
 
         result = await self.db.execute(

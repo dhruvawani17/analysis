@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, Loader2, User, Bot, Code, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import dynamic from "next/dynamic";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -78,22 +79,23 @@ export default function QAPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-indigo-100 bg-white/70 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
         <div className="container mx-auto flex items-center gap-4 py-4 px-6">
           <Link href={`/datasets/${id}`}>
-            <Button variant="ghost" size="icon" className="rounded-xl hover:bg-indigo-50">
-              <ArrowLeft className="h-4 w-4 text-indigo-600" />
+            <Button variant="ghost" size="icon" className="rounded-xl hover:bg-accent">
+              <ArrowLeft className="h-4 w-4 text-primary" />
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br bg-primary flex items-center justify-center">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900">AI Q&A</h1>
+            <h1 className="text-lg font-bold text-foreground">AI Q&A</h1>
           </div>
-        </div>
+        <ThemeToggle />
+          </div>
       </header>
 
       {/* Chat Area */}
@@ -105,8 +107,8 @@ export default function QAPage({
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center mx-auto mb-4">
                 <Bot className="h-8 w-8 text-indigo-500" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Ask anything about your data</h2>
-              <p className="text-sm text-gray-500 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">Ask anything about your data</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500 mb-6">
                 I can answer questions, run calculations, and create visualizations.
               </p>
               <div className="space-y-2">
@@ -114,7 +116,7 @@ export default function QAPage({
                   <button
                     key={s}
                     onClick={() => askQuestion(s)}
-                    className="w-full text-left px-4 py-2.5 rounded-xl bg-white border border-indigo-100 text-sm text-gray-700 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                    className="w-full text-left px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-border text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600 hover:border-indigo-300 hover:bg-accent transition-all"
                   >
                     {s}
                   </button>
@@ -132,7 +134,7 @@ export default function QAPage({
                   className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br bg-primary flex items-center justify-center shrink-0 shadow-sm">
                       <Bot className="h-4 w-4 text-white" />
                     </div>
                   )}
@@ -140,10 +142,10 @@ export default function QAPage({
                     className={`max-w-[85%] rounded-2xl p-4 ${
                       msg.role === "user"
                         ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-200"
-                        : "bg-white border border-indigo-100 shadow-sm"
+                        : "bg-white dark:bg-slate-900 border border-border shadow-sm"
                     }`}
                   >
-                    <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "assistant" ? "text-gray-700" : ""}`}>
+                    <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "assistant" ? "text-gray-700 dark:text-slate-300 dark:text-slate-600" : ""}`}>
                       {msg.content}
                     </p>
                     {msg.code && (
@@ -177,11 +179,11 @@ export default function QAPage({
               ))}
               {loading && (
                 <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-sm">
+                  <div className="h-8 w-8 rounded-xl bg-gradient-to-br bg-primary flex items-center justify-center shadow-sm">
                     <Loader2 className="h-4 w-4 text-white animate-spin" />
                   </div>
-                  <div className="bg-white border border-indigo-100 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500">
                       <div className="flex gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0ms]" />
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:150ms]" />
@@ -198,7 +200,7 @@ export default function QAPage({
 
         {/* Input */}
         <div className="sticky bottom-0 pt-4">
-          <div className="flex gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-2xl border border-indigo-100 shadow-lg shadow-indigo-100/30">
+          <div className="flex gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm dark:bg-slate-900/80 p-2 rounded-2xl border border-border shadow-lg shadow-indigo-100/30">
             <Input
               placeholder="Ask a question about your data..."
               value={question}

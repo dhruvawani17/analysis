@@ -27,7 +27,7 @@ async def generate_report(
     df = load_dataframe(dataset.file_path)
     eda_result = run_eda(df)
 
-    cleaning = json.loads(dataset.data_quality_report) if dataset.data_quality_report else None
+    cleaning = dataset.data_quality_report if isinstance(dataset.data_quality_report, dict) else (json.loads(dataset.data_quality_report) if dataset.data_quality_report else None)
     summary = _build_summary(df, eda_result)
 
     html = await generate_html_report(
@@ -51,7 +51,7 @@ async def download_report(
     df = load_dataframe(dataset.file_path)
     eda_result = run_eda(df)
 
-    cleaning = json.loads(dataset.data_quality_report) if dataset.data_quality_report else None
+    cleaning = dataset.data_quality_report if isinstance(dataset.data_quality_report, dict) else (json.loads(dataset.data_quality_report) if dataset.data_quality_report else None)
     summary = _build_summary(df, eda_result)
 
     html = await generate_html_report(

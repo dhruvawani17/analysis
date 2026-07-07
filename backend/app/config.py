@@ -11,8 +11,14 @@ class Settings(BaseSettings):
     nvidia_api_key: str = ""
     llm_model: str = "gpt-4o"
 
-    database_url: str = "sqlite+aiosqlite:///./data/analyst.db"
-    upload_dir: str = "./data/uploads"
+    database_url: str = "postgresql+asyncpg://neondb_owner:npg_xxxxxxxxxxxx@ep-xxxxx.us-east-2.aws.neon.tech/neondb?ssl=require"
+
+    # S3-compatible storage (Backblaze B2, Cloudflare R2, AWS S3, etc.)
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_s3_bucket: str = "datanex-storage"
+    aws_s3_region: str = "us-east-005"
+    aws_s3_endpoint: str = "https://s3.us-east-005.backblazeb2.com"
 
     host: str = "0.0.0.0"
     port: int = 8000
@@ -26,6 +32,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-# For Vercel: create data dirs if they don't exist
-os.makedirs(settings.upload_dir, exist_ok=True)

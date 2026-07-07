@@ -13,3 +13,5 @@ data/uploads/*
 !data/uploads/.gitkeep
 *.db
 *.sqlite3
+aws-credentials.json
+backend/aws-credentials.json
