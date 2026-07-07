@@ -44,3 +44,6 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.railpack]
+start = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
