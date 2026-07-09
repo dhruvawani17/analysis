@@ -62,7 +62,7 @@ export default function HomePage() {
     mutationFn: api.datasets.upload,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["datasets"] });
-      router.push(`/datasets/${result.id}/chat`);
+      router.push(`/datasets/${result.id}`);
     },
   });
 
@@ -196,7 +196,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-5 gap-3">
             {datasets.slice(0, 5).map((d) => (
-              <Link key={d.id} href={`/datasets/${d.id}/chat`}>
+              <Link key={d.id} href={`/datasets/${d.id}`}>
                 <div className="group p-4 rounded-xl border border-[#1C1E2E] bg-[#12141F] hover:border-[#2a2d3e] hover:bg-[#161827] transition-all cursor-pointer">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${recentProjects[0].color}15` }}>

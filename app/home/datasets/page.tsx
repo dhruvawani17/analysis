@@ -62,7 +62,7 @@ export default function DatasetsPage() {
                   <td className="px-5 py-3.5 text-[13px] text-[#D1D5DB]">{d.columns ?? "—"}</td>
                   <td className="px-5 py-3.5 text-[13px] text-[#6B7280]">{new Date(d.created_at).toLocaleDateString()}</td>
                   <td className="px-5 py-3.5">
-                    <Link href={`/datasets/${d.id}/chat`} className="text-[12px] text-[#6366F1] hover:text-[#818CF8] font-medium flex items-center gap-1 transition-colors"
+                    <Link href={`/datasets/${d.id}`} className="text-[12px] text-[#6366F1] hover:text-[#818CF8] font-medium flex items-center gap-1 transition-colors"
                       style={{ fontFamily: "'General Sans', system-ui, sans-serif" }}>
                       Open <ArrowRight className="w-3 h-3" />
                     </Link>

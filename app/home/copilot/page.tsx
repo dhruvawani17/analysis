@@ -105,7 +105,7 @@ function CopilotContent() {
           <h3 className="text-[13px] font-semibold text-[#6B7280] mb-3" style={{ fontFamily: "'General Sans', system-ui, sans-serif" }}>Your Datasets</h3>
           <div className="space-y-2">
             {datasets.map((d) => (
-              <Link key={d.id} href={`/datasets/${d.id}/chat`}>
+              <Link key={d.id} href={`/datasets/${d.id}`}>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#12141F] border border-[#1C1E2E] hover:border-[#2a2d3e] hover:bg-[#161827] transition-all group cursor-pointer">
                   <div className="w-9 h-9 rounded-lg bg-[#4F46E5]/15 flex items-center justify-center flex-shrink-0">
                     <Database className="w-4 h-4 text-[#6366F1]" />

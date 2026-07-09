@@ -49,7 +49,7 @@ export default function ProjectsPage() {
             const Icon = icons[i % icons.length];
             const color = colors[i % colors.length];
             return (
-              <Link key={d.id} href={`/datasets/${d.id}/chat`}>
+              <Link key={d.id} href={`/datasets/${d.id}`}>
                 <div className="group p-5 rounded-xl border border-[#1C1E2E] bg-[#12141F] hover:border-[#2a2d3e] hover:bg-[#161827] transition-all cursor-pointer h-full">
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}15` }}>
