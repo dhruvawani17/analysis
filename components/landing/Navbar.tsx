@@ -34,13 +34,7 @@ export function LandingNavbar() {
           }`}
         >
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#4F46E5] flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <img src="/logo.png" alt="Datanex AI" className="w-7 h-7 rounded-lg object-contain" />
             <span className="text-base font-bold tracking-tight text-[#F8FAFC]" style={{ fontFamily: "'General Sans', system-ui, sans-serif" }}>
               DATANEX AI
             </span>
