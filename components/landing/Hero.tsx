@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import Link from "next/link";
 import { WorkspacePreview } from "./WorkspacePreview";
+import { useAuth } from "@/components/auth-provider";
 
 export function Hero() {
+  const { user } = useAuth();
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-16 px-4 overflow-hidden">
       <div className="relative z-10 max-w-[900px] mx-auto text-center">
@@ -35,7 +37,7 @@ export function Hero() {
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.75, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/sign-up" className="group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#4F46E5] hover:bg-[#4338CA] rounded-full transition-all duration-300 hover:shadow-xl hover:shadow-[#4F46E5]/25 hover:-translate-y-0.5">
+          <Link href={user ? "/home" : "/sign-up"} className="group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#4F46E5] hover:bg-[#4338CA] rounded-full transition-all duration-300 hover:shadow-xl hover:shadow-[#4F46E5]/25 hover:-translate-y-0.5">
             Start Free
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
