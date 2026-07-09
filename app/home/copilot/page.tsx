@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Bot, Database, ArrowRight, Sparkles, Send, ArrowUpRight } from "lucide-react";
 
@@ -16,10 +16,21 @@ const suggestions = [
   "Create a summary dashboard",
 ];
 
-export default function CopilotPage() {
+function CopilotContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const { data: datasets, isLoading } = useQuery({ queryKey: ["datasets"], queryFn: api.datasets.list });
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      setInput(q);
+      if (datasets && datasets.length > 0) {
+        handleAsk(datasets[0].id, q);
+      }
+    }
+  }, [searchParams, datasets]);
 
   function handleAsk(datasetId: number, question: string) {
     const q = encodeURIComponent(question);
@@ -123,5 +134,13 @@ export default function CopilotPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CopilotPage() {
+  return (
+    <Suspense>
+      <CopilotContent />
+    </Suspense>
   );
 }

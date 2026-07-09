@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useRef, useEffect } from "react";
+import { use, useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import type { CopilotMessage, ToolResult, CopilotContext } from "@/lib/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -110,7 +111,7 @@ function renderEDAInline(data: Record<string, any>) {
     <div className="mt-3 space-y-3">
       {/* Insights */}
       {insights.length > 0 && (
-        <Card className="bg-amber-50/50 border-amber-200">
+        <Card className="bg-amber-50/50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-amber-700 mb-1">Key Insights</p>
             {insights.slice(0, 5).map((ins: any, i: number) => (
@@ -124,7 +125,7 @@ function renderEDAInline(data: Record<string, any>) {
       {Object.keys(stats).length > 0 && (
         <Card className="bg-card border-border">
           <CardContent className="p-3">
-            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600 mb-2">Numeric Statistics</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-2">Numeric Statistics</p>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -159,7 +160,7 @@ function renderEDAInline(data: Record<string, any>) {
       {charts.correlation && (
         <Card className="bg-card border-border">
           <CardContent className="p-3">
-            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600 mb-1">Correlation Matrix</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Correlation Matrix</p>
             <Plot
               data={charts.correlation.data}
               layout={{ ...charts.correlation.layout, height: 280, margin: { t: 5, b: 40, l: 50, r: 20 } }}
@@ -192,7 +193,7 @@ function renderEDAInline(data: Record<string, any>) {
       {charts.missing && (
         <Card className="bg-card border-border">
           <CardContent className="p-3">
-            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600 mb-1">Missing Values</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Missing Values</p>
             <Plot
               data={charts.missing.data}
               layout={{ ...charts.missing.layout, height: 200, margin: { t: 5, b: 40, l: 50, r: 20 } }}
@@ -222,10 +223,10 @@ function renderDashboardInline(data: Record<string, any>) {
           {kpis.map((kpi: any, i: number) => (
             <Card key={i} className="bg-card border-border overflow-hidden">
               <CardContent className="p-3">
-                <p className="text-[10px] font-medium text-gray-500 dark:text-slate-400 dark:text-slate-500">{kpi.name}</p>
+                <p className="text-[10px] font-medium text-gray-500 dark:text-slate-400">{kpi.name}</p>
                 <p className="text-lg font-bold text-foreground">{kpi.value}</p>
                 {kpi.trend && (
-                  <p className={`text-[10px] font-medium flex items-center gap-0.5 ${String(kpi.trend).startsWith("+") ? "text-emerald-600" : String(kpi.trend).startsWith("-") ? "text-red-600" : "text-gray-500 dark:text-slate-400 dark:text-slate-500"}`}>
+                  <p className={`text-[10px] font-medium flex items-center gap-0.5 ${String(kpi.trend).startsWith("+") ? "text-emerald-600" : String(kpi.trend).startsWith("-") ? "text-red-600" : "text-gray-500 dark:text-slate-400"}`}>
                     {String(kpi.trend).startsWith("+") ? <TrendingUp className="h-2.5 w-2.5" /> : String(kpi.trend).startsWith("-") ? <TrendingDown className="h-2.5 w-2.5" /> : null}
                     {kpi.trend}
                   </p>
@@ -242,7 +243,7 @@ function renderDashboardInline(data: Record<string, any>) {
           {renderedCharts.map((chart: any, i: number) => (
             <Card key={i} className="bg-card border-border">
               <CardContent className="p-2">
-                <p className="text-[10px] font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600 mb-1">{chart.title}</p>
+                <p className="text-[10px] font-semibold text-gray-700 dark:text-slate-300 mb-1">{chart.title}</p>
                 {chart.plotly ? (
                   <Plot
                     data={chart.plotly.data}
@@ -254,7 +255,7 @@ function renderDashboardInline(data: Record<string, any>) {
                   <div className="h-[160px] bg-gray-50 rounded flex items-center justify-center">
                     <div className="text-center">
                       <BarChart3 className="h-6 w-6 text-gray-300 mx-auto mb-1" />
-                      <p className="text-[9px] text-gray-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500">{chart.type}: {chart.title}</p>
+                      <p className="text-[9px] text-gray-400 dark:text-slate-500 dark:text-slate-400">{chart.type}: {chart.title}</p>
                     </div>
                   </div>
                 )}
@@ -293,18 +294,18 @@ function renderMLInline(data: Record<string, any>) {
       {results.length > 0 && (
         <Card className="bg-card border-border">
           <CardContent className="p-3">
-            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600 mb-2">Model Comparison</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-2">Model Comparison</p>
             <div className="space-y-1.5">
               {results.filter((r: any) => r.test_score != null).map((r: any, i: number) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className={`text-xs w-24 truncate ${r.model === bestModel ? "font-bold text-violet-700" : "text-gray-600 dark:text-slate-400 dark:text-slate-500"}`}>{r.model}</span>
+                  <span className={`text-xs w-24 truncate ${r.model === bestModel ? "font-bold text-violet-700" : "text-gray-600 dark:text-slate-400"}`}>{r.model}</span>
                   <div className="flex-1 bg-gray-100 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${r.model === bestModel ? "bg-gradient-to-r from-violet-400 to-purple-500" : "bg-indigo-300"}`}
                       style={{ width: `${(r.test_score || 0) * 100}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500 w-12 text-right">{(r.test_score * 100).toFixed(1)}%</span>
+                  <span className="text-xs text-gray-500 dark:text-slate-400 w-12 text-right">{(r.test_score * 100).toFixed(1)}%</span>
                 </div>
               ))}
             </div>
@@ -314,7 +315,7 @@ function renderMLInline(data: Record<string, any>) {
 
       {/* Feature Engineering */}
       {featureEngineering.applied && featureEngineering.applied.length > 0 && (
-        <Card className="bg-violet-50/50 border-violet-200">
+        <Card className="bg-violet-50/50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-violet-700 mb-1">Feature Engineering</p>
             {featureEngineering.applied.map((f: string, i: number) => (
@@ -362,13 +363,13 @@ function renderStoryInline(data: Record<string, any>) {
 
   return (
     <div className="mt-3 space-y-3">
-      <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-border">
+      <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 border-border">
         <CardContent className="p-4">
           <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 mb-2">{title}</h3>
           {narrative.map((section: any, i: number) => (
             <div key={i} className="mb-3">
               <h4 className="text-xs font-semibold text-indigo-700 mb-1">{section.section}</h4>
-              <p className="text-xs text-gray-700 dark:text-slate-300 dark:text-slate-600 leading-relaxed">{section.content}</p>
+              <p className="text-xs text-gray-700 dark:text-slate-300 leading-relaxed">{section.content}</p>
             </div>
           ))}
           {conclusion && (
@@ -412,7 +413,7 @@ function renderBusinessInline(data: Record<string, any>) {
       )}
 
       {insights.length > 0 && (
-        <Card className="bg-emerald-50/50 border-emerald-200">
+        <Card className="bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-emerald-700 mb-1">Key Insights</p>
             {insights.slice(0, 5).map((ins: any, i: number) => (
@@ -423,7 +424,7 @@ function renderBusinessInline(data: Record<string, any>) {
       )}
 
       {risks.length > 0 && (
-        <Card className="bg-red-50/50 border-red-200">
+        <Card className="bg-red-50/50 dark:bg-red-950/30 border-red-200 dark:border-red-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-red-700 mb-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Risks</p>
             {risks.slice(0, 3).map((r: any, i: number) => (
@@ -434,7 +435,7 @@ function renderBusinessInline(data: Record<string, any>) {
       )}
 
       {opportunities.length > 0 && (
-        <Card className="bg-blue-50/50 border-blue-200">
+        <Card className="bg-blue-50/50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1"><Lightbulb className="h-3 w-3" /> Opportunities</p>
             {opportunities.slice(0, 3).map((o: any, i: number) => (
@@ -445,7 +446,7 @@ function renderBusinessInline(data: Record<string, any>) {
       )}
 
       {recommendations.length > 0 && (
-        <Card className="bg-violet-50/50 border-violet-200">
+        <Card className="bg-violet-50/50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-violet-700 mb-1 flex items-center gap-1"><Target className="h-3 w-3" /> Recommendations</p>
             {recommendations.slice(0, 5).map((r: any, i: number) => (
@@ -456,7 +457,7 @@ function renderBusinessInline(data: Record<string, any>) {
       )}
 
       {actionItems.length > 0 && (
-        <Card className="bg-amber-50/50 border-amber-200">
+        <Card className="bg-amber-50/50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-amber-700 mb-1">Action Items</p>
             {actionItems.map((a: any, i: number) => (
@@ -473,7 +474,7 @@ function renderBusinessInline(data: Record<string, any>) {
 function renderCleaningInline(data: Record<string, any>) {
   return (
     <div className="mt-3">
-      <Card className="bg-emerald-50/50 border-emerald-200">
+      <Card className="bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800">
         <CardContent className="p-3">
           <div className="grid grid-cols-4 gap-2 mb-2">
             {[
@@ -484,7 +485,7 @@ function renderCleaningInline(data: Record<string, any>) {
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <p className="text-lg font-bold text-foreground">{item.value ?? 0}</p>
-                <p className="text-[9px] text-gray-500 dark:text-slate-400 dark:text-slate-500">{item.label}</p>
+                <p className="text-[9px] text-gray-500 dark:text-slate-400">{item.label}</p>
               </div>
             ))}
           </div>
@@ -515,7 +516,7 @@ function renderTimeseriesInline(data: Record<string, any>) {
           </div>
           {forecast.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600 mb-1">Forecast ({data.periods} periods)</p>
+              <p className="text-[10px] font-semibold text-gray-700 dark:text-slate-300 mb-1">Forecast ({data.periods} periods)</p>
               <div className="flex gap-1 flex-wrap">
                 {forecast.map((v: number, i: number) => (
                   <Badge key={i} variant="secondary" className="text-[9px] bg-indigo-50">{v.toFixed(0)}</Badge>
@@ -539,14 +540,14 @@ function renderCodeInline(data: Record<string, any>, tool: string) {
     <div className="mt-3">
       <Card className="bg-gray-900 border-gray-700">
         <CardContent className="p-3">
-          {filename && <p className="text-[10px] text-gray-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">{filename}</p>}
+          {filename && <p className="text-[10px] text-gray-400 dark:text-slate-500 dark:text-slate-400 mb-1">{filename}</p>}
           <pre className="text-[11px] text-green-400 overflow-x-auto max-h-40 overflow-y-auto font-mono">
             {typeof code === "string" ? code.slice(0, 1000) : JSON.stringify(code, null, 2).slice(0, 1000)}
             {(typeof code === "string" ? code.length : JSON.stringify(code).length) > 1000 && "\n... (truncated)"}
           </pre>
           {requirements && (
             <div className="mt-2">
-              <p className="text-[10px] text-gray-400 dark:text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-0.5">Requirements:</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 dark:text-slate-400 mb-0.5">Requirements:</p>
               <pre className="text-[10px] text-gray-300 font-mono">{typeof requirements === "string" ? requirements : JSON.stringify(requirements)}</pre>
             </div>
           )}
@@ -599,7 +600,7 @@ function renderGoalInline(data: Record<string, any>) {
 
   return (
     <div className="mt-3 space-y-2">
-      <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+      <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
         <CardContent className="p-3">
           <p className="text-sm font-semibold text-emerald-800">Detected Goal: {goal}</p>
           <div className="flex flex-wrap gap-2 mt-2">
@@ -607,10 +608,10 @@ function renderGoalInline(data: Record<string, any>) {
             {targetColumn && <Badge className="text-[10px] bg-blue-100 text-blue-700">Target: {targetColumn}</Badge>}
           </div>
           {suggestedModels.length > 0 && (
-            <p className="text-[11px] text-gray-600 dark:text-slate-400 dark:text-slate-500 mt-1">Models: {suggestedModels.join(", ")}</p>
+            <p className="text-[11px] text-gray-600 dark:text-slate-400 mt-1">Models: {suggestedModels.join(", ")}</p>
           )}
           {suggestedMetrics.length > 0 && (
-            <p className="text-[11px] text-gray-600 dark:text-slate-400 dark:text-slate-500">Metrics: {suggestedMetrics.join(", ")}</p>
+            <p className="text-[11px] text-gray-600 dark:text-slate-400">Metrics: {suggestedMetrics.join(", ")}</p>
           )}
         </CardContent>
       </Card>
@@ -626,7 +627,7 @@ function renderConfidenceInline(data: Record<string, any>) {
   return (
     <div className="mt-3 space-y-2">
       {critical.length > 0 && (
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-red-700 mb-1">🔴 Critical ({critical.length})</p>
             {critical.map((i: any, idx: number) => (
@@ -636,7 +637,7 @@ function renderConfidenceInline(data: Record<string, any>) {
         </Card>
       )}
       {warnings.length > 0 && (
-        <Card className="bg-amber-50 border-amber-200">
+        <Card className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-amber-700 mb-1">🟡 Warnings ({warnings.length})</p>
             {warnings.map((i: any, idx: number) => (
@@ -646,7 +647,7 @@ function renderConfidenceInline(data: Record<string, any>) {
         </Card>
       )}
       {critical.length === 0 && warnings.length === 0 && (
-        <Card className="bg-emerald-50 border-emerald-200">
+        <Card className="bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-3">
             <p className="text-xs font-semibold text-emerald-700">✅ All checks passed — ready for modeling</p>
           </CardContent>
@@ -675,7 +676,7 @@ function renderPlaygroundInline(data: Record<string, any>) {
                   </div>
                   <p className="text-xs font-mono font-bold">{problemType === "classification" ? (m.test_score * 100).toFixed(1) + "%" : m.test_score.toFixed(4)}</p>
                 </div>
-                <div className="flex gap-3 mt-1 text-[10px] text-gray-500 dark:text-slate-400 dark:text-slate-500">
+                <div className="flex gap-3 mt-1 text-[10px] text-gray-500 dark:text-slate-400">
                   {m.training_time > 0 && <span>⏱ {m.training_time}s</span>}
                   {m.inference_speed > 0 && <span>⚡ {m.inference_speed.toLocaleString()} pred/s</span>}
                   {m.model_size_kb > 0 && <span>💾 {m.model_size_kb}KB</span>}
@@ -684,7 +685,7 @@ function renderPlaygroundInline(data: Record<string, any>) {
                 {m.feature_importance && Object.keys(m.feature_importance).length > 0 && (
                   <div className="flex gap-2 mt-1">
                     {Object.entries(m.feature_importance).slice(0, 3).map(([f, v]: [string, any]) => (
-                      <Badge key={f} className="text-[9px] bg-gray-100 text-gray-600 dark:text-slate-400 dark:text-slate-500">{f}: {(v as number).toFixed(2)}</Badge>
+                      <Badge key={f} className="text-[9px] bg-gray-100 text-gray-600 dark:text-slate-400">{f}: {(v as number).toFixed(2)}</Badge>
                     ))}
                   </div>
                 )}
@@ -708,26 +709,26 @@ function renderSimulationInline(data: Record<string, any>) {
 
   return (
     <div className="mt-3 space-y-2">
-      <Card className={`${direction === "increase" ? "bg-emerald-50 border-emerald-200" : direction === "decrease" ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"}`}>
+      <Card className={`${direction === "increase" ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800" : direction === "decrease" ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"}`}>
         <CardContent className="p-3">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">{direction === "increase" ? "📈" : direction === "decrease" ? "📉" : "➡️"}</span>
             <span className="text-lg font-bold">{pctImpact > 0 ? "+" : ""}{pctImpact}%</span>
-            <span className="text-xs text-gray-600 dark:text-slate-400 dark:text-slate-500">impact on {targetCol}</span>
+            <span className="text-xs text-gray-600 dark:text-slate-400">impact on {targetCol}</span>
           </div>
-          <div className="text-xs text-gray-600 dark:text-slate-400 dark:text-slate-500">
+          <div className="text-xs text-gray-600 dark:text-slate-400">
             Baseline: {baseline.toFixed(2)} → Scenario: {scenario.toFixed(2)}
           </div>
           {changesApplied.length > 0 && (
             <div className="mt-2">
-              <p className="text-[11px] font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-600">Changes:</p>
+              <p className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Changes:</p>
               {changesApplied.map((c: any, idx: number) => (
-                <p key={idx} className="text-[10px] text-gray-500 dark:text-slate-400 dark:text-slate-500 ml-2">• {c.column}: {c.original_mean} → {c.new_mean} ({(c.change_pct >= 0 ? "+" : "")}{c.change_pct}%)</p>
+                <p key={idx} className="text-[10px] text-gray-500 dark:text-slate-400 ml-2">• {c.column}: {c.original_mean} → {c.new_mean} ({(c.change_pct >= 0 ? "+" : "")}{c.change_pct}%)</p>
               ))}
             </div>
           )}
           {analysis && (
-            <div className="mt-2 p-2 bg-white/70 dark:bg-slate-900/70 rounded text-[11px] text-gray-700 dark:text-slate-300 dark:text-slate-600">{analysis}</div>
+            <div className="mt-2 p-2 bg-white/70 dark:bg-slate-800/70 rounded text-[11px] text-gray-700 dark:text-slate-300">{analysis}</div>
           )}
         </CardContent>
       </Card>
@@ -751,7 +752,7 @@ function renderLineageInline(data: Record<string, any>) {
                 </div>
                 <div className={`pb-4 ${step.is_current ? "font-semibold" : ""}`}>
                   <p className="text-xs text-gray-800 dark:text-slate-200">{step.label}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-slate-400 dark:text-slate-500">{step.description}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -774,10 +775,10 @@ function renderMarketplaceInline(data: Record<string, any>) {
               <p className="text-xs font-semibold text-gray-800 dark:text-slate-200">{ds.name}</p>
               <Badge className="text-[10px] bg-indigo-100 text-indigo-700">{ds.relevance_score}/10</Badge>
             </div>
-            <p className="text-[11px] text-gray-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">{ds.description}</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">{ds.description}</p>
             <div className="flex gap-2 mt-1">
-              <Badge className="text-[9px] bg-gray-100 text-gray-600 dark:text-slate-400 dark:text-slate-500">{ds.source}</Badge>
-              <Badge className="text-[9px] bg-gray-100 text-gray-600 dark:text-slate-400 dark:text-slate-500">{ds.suggested_join}</Badge>
+              <Badge className="text-[9px] bg-gray-100 text-gray-600 dark:text-slate-400">{ds.source}</Badge>
+              <Badge className="text-[9px] bg-gray-100 text-gray-600 dark:text-slate-400">{ds.suggested_join}</Badge>
             </div>
           </CardContent>
         </Card>
@@ -792,13 +793,13 @@ function renderAlertingInline(data: Record<string, any>) {
   return (
     <div className="mt-3 space-y-1">
       {alerts.map((a: any, idx: number) => (
-        <Card key={idx} className={`${a.severity === "critical" ? "bg-red-50 border-red-200" : a.severity === "warning" ? "bg-amber-50 border-amber-200" : a.severity === "success" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"}`}>
+        <Card key={idx} className={`${a.severity === "critical" ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" : a.severity === "warning" ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800" : a.severity === "success" ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800" : "bg-blue-50 border-blue-200"}`}>
           <CardContent className="p-2.5">
             <div className="flex items-start gap-2">
               <span className="mt-0.5">{a.severity === "critical" ? "🔴" : a.severity === "warning" ? "🟡" : a.severity === "success" ? "✅" : "ℹ️"}</span>
               <div>
                 <p className="text-xs font-semibold text-gray-800 dark:text-slate-200">{a.title}</p>
-                <p className="text-[10px] text-gray-500 dark:text-slate-400 dark:text-slate-500">{a.message}</p>
+                <p className="text-[10px] text-gray-500 dark:text-slate-400">{a.message}</p>
               </div>
             </div>
           </CardContent>
@@ -957,7 +958,7 @@ function MultisheetExecView({ data, sheets, relationships, rec }: { data: any; s
             )}
             {execError && <p className="text-[10px] text-red-600 mt-1">Error: {execError}</p>}
             {execResult && (
-              <Card className="mt-2 bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800">
+              <Card className="mt-2 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 dark:bg-emerald-950 dark:border-emerald-800">
                 <CardContent className="p-2">
                   <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
                     {execResult.message || `${execResult.rows} rows, ${execResult.columns} columns created`}
@@ -998,20 +999,20 @@ function ToolResultCard({ result, datasetId }: { result: ToolResult; datasetId: 
   const ToolIcon = toolIcons[result.tool] || Brain;
 
   const toolColors: Record<string, string> = {
-    cleaning: "from-emerald-50 to-teal-50 border-emerald-200",
-    eda: "from-indigo-50 to-blue-50 border-border",
+    cleaning: "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800",
+    eda: "from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-border",
     ml: "bg-card border-primary/20",
     dashboard: "bg-card border-border",
-    story: "from-indigo-50 to-violet-50 border-border",
+    story: "from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 border-border",
     timeseries: "bg-warning/5 border-warning/20",
-    business: "from-emerald-50 to-teal-50 border-emerald-200",
-    summary: "from-indigo-50 to-violet-50 border-border",
-    goal: "from-emerald-50 to-teal-50 border-emerald-200",
+    business: "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800",
+    summary: "from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 border-border",
+    goal: "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800",
     confidence: "bg-warning/5 border-warning/20",
     playground: "bg-card border-primary/20",
     simulation: "bg-card border-border",
-    lineage: "from-indigo-50 to-blue-50 border-border",
-    marketplace: "from-emerald-50 to-teal-50 border-emerald-200",
+    lineage: "from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-border",
+    marketplace: "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800",
     alerting: "bg-destructive/5 border-destructive/20",
     multisheet: "bg-card border-border",
   };
@@ -1055,11 +1056,11 @@ function ToolResultCard({ result, datasetId }: { result: ToolResult; datasetId: 
       {/* Summary + explanation */}
       <Card className={`mt-2 bg-gradient-to-r ${bg}`}>
         <CardContent className="p-3">
-          <p className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{result.summary}</p>
+          <p className="text-sm text-gray-700 dark:text-slate-300">{result.summary}</p>
           {result.what_changed.length > 0 && (
             <div className="mt-1">
               {result.what_changed.slice(0, 3).map((c, i) => (
-                <p key={i} className="text-[11px] text-gray-600 dark:text-slate-400 dark:text-slate-500 ml-2">• {c}</p>
+                <p key={i} className="text-[11px] text-gray-600 dark:text-slate-400 ml-2">• {c}</p>
               ))}
             </div>
           )}
@@ -1096,18 +1097,19 @@ function ToolResultCard({ result, datasetId }: { result: ToolResult; datasetId: 
 }
 
 /* ─── Main Page ─── */
-export default function CopilotPage({
-  params,
+function CopilotContent({
+  datasetId,
 }: {
-  params: Promise<{ id: string }>;
+  datasetId: number;
 }) {
-  const { id } = use(params);
-  const datasetId = parseInt(id, 10);
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") ?? "";
 
   const [messages, setMessages] = useState<CopilotMessage[]>([]);
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
+  const [initialQuerySent, setInitialQuerySent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: dataset } = useQuery({
@@ -1158,6 +1160,13 @@ export default function CopilotPage({
     }
   };
 
+  useEffect(() => {
+    if (initialQuery && !initialQuerySent && context && messages.length >= 1 && !loading) {
+      setInitialQuerySent(true);
+      sendMessage(initialQuery);
+    }
+  }, [initialQuery, initialQuerySent, context, messages, loading]);
+
   const runAll = async () => {
     setLoading(true);
     setMessages((prev) => [...prev, { role: "user", content: "Run everything" }]);
@@ -1183,7 +1192,7 @@ export default function CopilotPage({
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
       {/* Header */}
-      <header className="border-b border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50 shrink-0">
+      <header className="border-b border-border bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50 shrink-0">
         <div className="flex items-center gap-4 py-3 px-6">
           <Link href={`/datasets/${datasetId}`}>
             <Button variant="ghost" size="icon" className="rounded-xl hover:bg-accent">
@@ -1196,7 +1205,7 @@ export default function CopilotPage({
               <h1 className="text-lg font-bold text-foreground">AI Copilot</h1>
             </div>
             {dataset && (
-              <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500 truncate">
+              <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                 {dataset.name} &bull; {dataset.rows?.toLocaleString()} rows &bull; {dataset.columns} columns
               </p>
             )}
@@ -1269,7 +1278,7 @@ export default function CopilotPage({
               </div>
               {msg.role === "user" && (
                 <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-1">
-                  <User className="h-4 w-4 text-gray-600 dark:text-slate-400 dark:text-slate-500" />
+                  <User className="h-4 w-4 text-gray-600 dark:text-slate-400" />
                 </div>
               )}
             </div>
@@ -1281,7 +1290,7 @@ export default function CopilotPage({
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <div className="bg-card border border-border rounded-2xl px-4 py-3">
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Thinking...</span>
                 </div>
@@ -1329,4 +1338,18 @@ function getSuggestions(ctx: CopilotContext): string[] {
   if (!ctx.eda_completed) return ["Run EDA", "Explore correlations", "Show distributions", "Train a model", "Goal detection"];
   if (!ctx.ml_completed) return ["Train ML models", "Model Playground", "What's the best algorithm?", "Generate dashboard", "Confidence check"];
   return ["Generate dashboard", "Deploy model", "Create story", "What insights?", "Model Playground", "What-if simulation"];
+}
+
+export default function CopilotPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const datasetId = parseInt(id, 10);
+  return (
+    <Suspense>
+      <CopilotContent datasetId={datasetId} />
+    </Suspense>
+  );
 }

@@ -99,7 +99,7 @@ export default function DatasetPage({
   if (!dataset) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <p className="text-gray-500 dark:text-slate-400 dark:text-slate-500">Dataset not found</p>
+        <p className="text-gray-500 dark:text-slate-400">Dataset not found</p>
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function DatasetPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
+      <header className="border-b border-border bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
         <div className="container mx-auto flex items-center gap-4 py-4 px-6">
           <Link href="/">
             <Button variant="ghost" size="icon" className="rounded-xl hover:bg-accent">
@@ -195,7 +195,7 @@ export default function DatasetPage({
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">AI Copilot</h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">Chat with your data</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">Chat with your data</p>
                       </div>
                     </div>
                   </CardContent>
@@ -210,7 +210,7 @@ export default function DatasetPage({
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Dashboard</h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">AI-generated dashboard</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">AI-generated dashboard</p>
                       </div>
                     </div>
                   </CardContent>
@@ -225,7 +225,7 @@ export default function DatasetPage({
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Models</h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">Train ML models</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">Train ML models</p>
                       </div>
                     </div>
                   </CardContent>
@@ -240,7 +240,7 @@ export default function DatasetPage({
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-slate-100 text-sm">Reports</h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500">Generate reports</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">Generate reports</p>
                       </div>
                     </div>
                   </CardContent>
@@ -256,7 +256,7 @@ export default function DatasetPage({
                     <Wand2 className="h-7 w-7 text-emerald-500" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-1">Clean your data first</h3>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500 mb-5">
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
                     Fix missing values, remove duplicates, detect outliers, and standardize types
                   </p>
                   {dataset.cleaned ? (
@@ -285,7 +285,7 @@ export default function DatasetPage({
 
             {/* Cleaning Report */}
             {cleanResult && (
-              <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+              <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -302,7 +302,7 @@ export default function DatasetPage({
                     ].map((item) => (
                       <div key={item.label} className="rounded-xl bg-card p-4 text-center border border-emerald-100">
                         <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{String(item.value ?? "0")}</p>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 dark:text-slate-500 mt-1">{item.label}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{item.label}</p>
                       </div>
                     ))}
                   </div>
@@ -318,7 +318,7 @@ export default function DatasetPage({
                     <Sparkles className="h-7 w-7 text-indigo-500" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-1">Ready to analyze</h3>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500 mb-5">
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
                     Run a full analysis to get statistics, charts, and AI insights
                   </p>
                   <Button
@@ -384,7 +384,7 @@ export default function DatasetPage({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm leading-relaxed text-gray-700 dark:text-slate-300 dark:text-slate-600">{analysisResult.ai_summary}</p>
+                      <p className="text-sm leading-relaxed text-gray-700 dark:text-slate-300">{analysisResult.ai_summary}</p>
                     </CardContent>
                   </Card>
                 )}
@@ -402,7 +402,7 @@ export default function DatasetPage({
                         {eda.insights.map((insight: any, i: number) => (
                           <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
                             <span className="text-amber-500 mt-0.5">•</span>
-                            <span className="text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600">{insight.message}</span>
+                            <span className="text-sm text-gray-700 dark:text-slate-300">{insight.message}</span>
                           </div>
                         ))}
                       </div>

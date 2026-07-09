@@ -81,7 +81,7 @@ export default function QAPage({
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
+      <header className="border-b border-border bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl dark:bg-slate-900/70 sticky top-0 z-50">
         <div className="container mx-auto flex items-center gap-4 py-4 px-6">
           <Link href={`/datasets/${id}`}>
             <Button variant="ghost" size="icon" className="rounded-xl hover:bg-accent">
@@ -108,7 +108,7 @@ export default function QAPage({
                 <Bot className="h-8 w-8 text-indigo-500" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">Ask anything about your data</h2>
-              <p className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500 mb-6">
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
                 I can answer questions, run calculations, and create visualizations.
               </p>
               <div className="space-y-2">
@@ -116,7 +116,7 @@ export default function QAPage({
                   <button
                     key={s}
                     onClick={() => askQuestion(s)}
-                    className="w-full text-left px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-border text-sm text-gray-700 dark:text-slate-300 dark:text-slate-600 hover:border-indigo-300 hover:bg-accent transition-all"
+                    className="w-full text-left px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-border text-sm text-gray-700 dark:text-slate-300 hover:border-indigo-300 hover:bg-accent transition-all"
                   >
                     {s}
                   </button>
@@ -145,7 +145,7 @@ export default function QAPage({
                         : "bg-white dark:bg-slate-900 border border-border shadow-sm"
                     }`}
                   >
-                    <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "assistant" ? "text-gray-700 dark:text-slate-300 dark:text-slate-600" : ""}`}>
+                    <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "assistant" ? "text-gray-700 dark:text-slate-300" : ""}`}>
                       {msg.content}
                     </p>
                     {msg.code && (
@@ -183,7 +183,7 @@ export default function QAPage({
                     <Loader2 className="h-4 w-4 text-white animate-spin" />
                   </div>
                   <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                       <div className="flex gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0ms]" />
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:150ms]" />
@@ -200,7 +200,7 @@ export default function QAPage({
 
         {/* Input */}
         <div className="sticky bottom-0 pt-4">
-          <div className="flex gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm dark:bg-slate-900/80 p-2 rounded-2xl border border-border shadow-lg shadow-indigo-100/30">
+          <div className="flex gap-2 bg-card backdrop-blur-sm dark:bg-slate-900/80 p-2 rounded-2xl border border-border shadow-lg shadow-indigo-100/30">
             <Input
               placeholder="Ask a question about your data..."
               value={question}

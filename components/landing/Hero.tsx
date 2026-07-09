@@ -17,7 +17,8 @@ export function Hero() {
         </motion.div>
 
         <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }} className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] mb-6">
-          <span className="text-[#F8FAFC]">Your AI </span>
+          <span className="text-[#F8FAFC]" style={{ fontFamily: "var(--font-stardos-stencil), system-ui" }}>Your </span>
+          <span className="text-[#F8FAFC]" style={{ fontFamily: "var(--font-stardos-stencil), system-ui" }}>AI </span>
           <span className="font-serif italic text-[#6366F1]">Data Team.</span>
         </motion.h1>
 
