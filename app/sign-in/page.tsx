@@ -86,13 +86,7 @@ export default function SignInPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-[#4F46E5] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <img src="/logo.png" alt="Datanex AI" className="w-9 h-9 rounded-lg object-contain" />
             <span className="text-lg font-bold text-[#F8FAFC]" style={{ fontFamily: "'General Sans', system-ui, sans-serif" }}>DATANEX AI</span>
           </Link>
           <h1 className="text-2xl font-bold text-[#F8FAFC]" style={{ fontFamily: "'General Sans', system-ui, sans-serif" }}>Welcome back</h1>

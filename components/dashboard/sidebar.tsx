@@ -53,13 +53,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-[220px] bg-[#0B0D17] border-r border-[#1C1E2E] flex flex-col z-40">
       {/* Logo */}
       <div className="h-16 flex items-center gap-2.5 px-5 border-b border-[#1C1E2E]">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
-        </div>
+        <img src="/logo.png" alt="Datanex AI" className="w-8 h-8 rounded-lg object-contain" />
         <span className="text-[15px] font-bold text-[#F0F0F5]" style={{ fontFamily: "'General Sans', system-ui, sans-serif" }}>
           DATANEX AI
         </span>
