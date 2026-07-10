@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Depends, Query, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -8,7 +8,7 @@ from app.api.deps import get_db, get_dataset_or_404, get_current_user, get_datas
 from app.services.ingestion import import_dataset
 from app.services.cleaning import clean_dataset
 from app.db.models import Dataset, User
-from app.core.storage import load_dataframe, save_dataframe, get_signed_url
+from app.core.storage import load_dataframe, save_dataframe, get_signed_url, delete_file, delete_prefix
 from app.repositories.dataset_repository import DatasetRepository
 import io, csv, json
 
@@ -181,3 +181,42 @@ async def execute_multisheet(
         result["new_dataset_id"] = new_dataset.id
         result["new_dataset_name"] = new_dataset.name
     return result
+
+
+@router.delete("/{dataset_id}")
+async def delete_dataset(
+    dataset: Dataset = Depends(get_dataset_or_404),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Delete a dataset and all associated files from storage."""
+    uid = str(dataset.user_id) if dataset.user_id else "default"
+    prefix = f"users/{uid}/"
+
+    # Delete files from B2 storage
+    try:
+        if dataset.file_path:
+            delete_file(dataset.file_path)
+        if dataset.cleaned_file_path:
+            delete_file(dataset.cleaned_file_path)
+        if dataset.original_file_path:
+            delete_file(dataset.original_file_path)
+        # Delete any per-sheet parquet files
+        if dataset.sheets_meta:
+            sheets = dataset.sheets_meta if isinstance(dataset.sheets_meta, dict) else {}
+            for sheet_name, sheet_path in sheets.items():
+                if isinstance(sheet_path, str) and sheet_path:
+                    try:
+                        delete_file(sheet_path)
+                    except Exception:
+                        pass
+        # Delete all files under this dataset's storage prefix
+        delete_prefix(f"{prefix}{dataset.id}/")
+    except Exception:
+        pass  # Best-effort cleanup
+
+    # Delete database record (cascades to all related tables)
+    await db.delete(dataset)
+    await db.commit()
+
+    return {"status": "deleted", "dataset_id": dataset.id}

@@ -150,8 +150,8 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
   }, [config]);
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      <header className="border-b border-[#27272a] bg-[#09090b]/80 backdrop-blur-xl sticky top-0 z-50 print:hidden">
+    <div className="min-h-screen bg-[#0a0f1a]">
+      <header className="border-b border-[#1e293b] bg-[#0f172a]/90 backdrop-blur-xl sticky top-0 z-50 print:hidden">
         <div className="mx-auto flex items-center gap-3 py-2.5 px-4 max-w-[1800px]">
           <Link href={`/datasets/${datasetId}`}>
             <Button variant="ghost" size="icon" className="rounded-lg hover:bg-[#18181b] h-8 w-8">
@@ -195,16 +195,16 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
       <main className="mx-auto px-4 py-4 max-w-[1800px]">
         {!config && !loadingDashboard && (
           <div className="flex items-center justify-center min-h-[60vh]">
-            <Card className="w-full max-w-md border-[#27272a] bg-[#18181b] shadow-none">
+            <Card className="w-full max-w-md border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] shadow-2xl">
               <CardContent className="p-10 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-[#18181b] border border-[#27272a] flex items-center justify-center mx-auto mb-5">
-                  <LayoutDashboard className="h-8 w-8 text-[#6366f1]" />
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/25">
+                  <LayoutDashboard className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#f8fafc] mb-1.5">Executive Dashboard</h3>
-                <p className="text-sm text-[#a1a1aa] mb-6 max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-lg font-bold text-white mb-1.5">Executive Dashboard</h3>
+                <p className="text-sm text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
                   Generate a comprehensive AI-powered dashboard with KPIs, data quality scoring, feature importance, outlier detection, correlations, ML metrics, predictions, and narrative insights
                 </p>
-                <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} size="default" className="gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white">
+                <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} size="default" className="gap-2 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-500/25">
                   {generateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LayoutDashboard className="h-4 w-4" />}
                   {generateMutation.isPending ? "Generating..." : "Generate Dashboard"}
                 </Button>
@@ -217,17 +217,17 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
           <div className="flex items-center justify-center min-h-[40vh]">
             <div className="text-center">
               <div className="relative mx-auto mb-5 h-14 w-14">
-                <div className="absolute inset-0 rounded-xl bg-[#6366f1] animate-pulse opacity-20" />
-                <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-[#6366f1]" /></div>
+                <div className="absolute inset-0 rounded-xl bg-indigo-500 animate-pulse opacity-20" />
+                <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-indigo-400" /></div>
               </div>
-              <p className="text-sm font-semibold text-[#f8fafc]">Building Your Executive Dashboard</p>
-              <p className="text-xs text-[#a1a1aa] mt-1">Computing data quality, distributions, correlations, ML insights, and narrative story</p>
+              <p className="text-sm font-bold text-white">Building Your Executive Dashboard</p>
+              <p className="text-xs text-slate-400 mt-1">Computing data quality, distributions, correlations, ML insights, and narrative story</p>
             </div>
           </div>
         )}
 
         {config && (
-          <div ref={dashboardRef} className="space-y-4">
+          <div ref={dashboardRef} className="space-y-4 overflow-hidden">
 
             {/* KPI Row */}
             {config.kpis && config.kpis.length > 0 && (
@@ -237,89 +237,229 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
                   const colorIdx = typeof kpi.color === "number" ? kpi.color % PBI_COLORS.length : 0;
                   const cs = PBI_COLORS[colorIdx];
                   const t = kpi.trend;
+                  const sparkData: number[] = Array.isArray(kpi.sparkline) ? kpi.sparkline.map(Number) : [30, 45, 35, 60, 42, 55, 48, 62, 50, 70, 58, 75];
+                  const max = Math.max(...sparkData);
+                  const min = Math.min(...sparkData);
+                  const range = max - min || 1;
+                  const points = sparkData.map((v, idx) => {
+                    const x = (idx / (sparkData.length - 1)) * 100;
+                    const y = 30 - ((v - min) / range) * 26;
+                    return `${x},${y}`;
+                  }).join(" ");
                   return (
-                    <div key={i} className="relative rounded-xl border border-[#27272a] bg-[#18181b] p-4 hover:border-[#3f3f46] transition-all duration-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${cs.bg} flex items-center justify-center`}>
+                    <div key={i} className="relative rounded-xl border border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4 hover:border-[#334155] transition-all duration-200 overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-20 h-20 opacity-[0.03]">
+                        <Icon className="w-full h-full" />
+                      </div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={`h-8 w-8 rounded-lg bg-gradient-to-br ${cs.bg} flex items-center justify-center shadow-lg`}>
                           <Icon className="h-4 w-4 text-white" />
                         </div>
                         {t && (
-                          <div className={`flex items-center gap-0.5 text-[10px] font-medium ${t.direction === "up" ? "text-emerald-400" : t.direction === "down" ? "text-red-400" : "text-[#a1a1aa]"}`}>
-                            {t.direction === "up" ? <TrendingUp className="h-3 w-3" /> : t.direction === "down" ? <TrendingDown className="h-3 w-3" /> : null}
+                          <div className={`flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${t.direction === "up" ? "text-emerald-400 bg-emerald-500/10" : t.direction === "down" ? "text-red-400 bg-red-500/10" : "text-slate-400 bg-slate-500/10"}`}>
+                            {t.direction === "up" ? <TrendingUp className="h-2.5 w-2.5" /> : t.direction === "down" ? <TrendingDown className="h-2.5 w-2.5" /> : null}
                             <span>{t.label}</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#a1a1aa] mb-0.5">{kpi.name}</p>
-                      <p className="text-2xl font-bold text-[#f8fafc]">{kpi.value}</p>
+                      <p className="text-[11px] text-slate-400 mb-1 font-medium">{kpi.name}</p>
+                      <p className="text-2xl font-bold text-white tracking-tight">{kpi.value}</p>
+                      <svg className="absolute bottom-0 left-0 right-0 h-8 opacity-40 group-hover:opacity-60 transition-opacity" viewBox="0 0 100 30" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id={`spark-${i}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={cs.hex} stopOpacity="0.3" />
+                            <stop offset="100%" stopColor={cs.hex} stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <polygon points={`0,30 ${points} 100,30`} fill={`url(#spark-${i})`} />
+                        <polyline points={points} fill="none" stroke={cs.hex} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     </div>
                   );
                 })}
               </div>
             )}
 
+            {/* Key Insights */}
+            {config.insights && config.insights.length > 0 && (
+              <div className="rounded-xl border border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className="h-4 w-4 text-amber-400" />
+                  <h2 className="text-sm font-semibold text-white">Key Insights</h2>
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-amber-500/20 text-amber-400 bg-amber-500/10 font-medium">{config.insights.length}</Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {config.insights.map((ins, i) => (
+                    <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                      <span className="text-amber-400 mt-0.5 text-sm">◆</span>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">{ins}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trend Analysis */}
+            {config.trends && config.trends.length > 0 && (
+              <div className="rounded-xl border border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#1e293b]">
+                  <TrendIcon className="h-4 w-4 text-cyan-400" />
+                  <h2 className="text-sm font-semibold text-white">Trend Analysis</h2>
+                </div>
+                <div className="p-4">
+                  {(() => {
+                    const trendMetrics = config.trends.map((t, i) => ({
+                      name: t.metric,
+                      current: typeof t.current === "number" ? t.current : parseFloat(String(t.current)) || 0,
+                      average: typeof t.average === "number" ? t.average : parseFloat(String(t.average)) || 0,
+                      change: t.change_pct,
+                      direction: t.direction,
+                    }));
+                    return (
+                      <div className="space-y-3">
+                        <div className="min-w-0 overflow-x-auto">
+                          <Plot
+                            data={[
+                              {
+                                x: trendMetrics.map(t => t.name),
+                                y: trendMetrics.map(t => t.current),
+                                type: "bar",
+                                name: "Current",
+                                marker: { color: "#3b82f6", cornerradius: 4 },
+                                yaxis: "y",
+                              },
+                              {
+                                x: trendMetrics.map(t => t.name),
+                                y: trendMetrics.map(t => t.average),
+                                type: "scatter",
+                                mode: "lines+markers",
+                                name: "Average",
+                                line: { color: "#f97316", width: 2.5, shape: "spline" },
+                                marker: { size: 7, color: "#f97316", line: { color: "#0f172a", width: 2 } },
+                                yaxis: "y",
+                              },
+                            ]}
+                            layout={{
+                              height: 260,
+                              margin: { t: 15, b: 90, l: 45, r: 15 },
+                              paper_bgcolor: "rgba(0,0,0,0)",
+                              plot_bgcolor: "rgba(0,0,0,0)",
+                              font: { color: "#94a3b8", size: 10 },
+                              xaxis: { gridcolor: "rgba(148,163,184,0.08)", tickangle: -35, tickfont: { size: 9 } },
+                              yaxis: { gridcolor: "rgba(148,163,184,0.08)" },
+                              showlegend: false,
+                              bargap: 0.5,
+                            }}
+                            config={{ responsive: true, displayModeBar: false }}
+                            className="w-full min-w-[400px]"
+                            useResizeHandler
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {trendMetrics.map((t, i) => (
+                            <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: PBI_COLORS[i % PBI_COLORS.length].hex }} />
+                                <span className="text-[11px] font-medium text-white truncate">{t.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0 ml-2">
+                                <span className="text-[10px] text-slate-400">Current: <b className="text-white">{t.current.toLocaleString()}</b></span>
+                                <span className="text-[10px] text-slate-400">Avg: <b className="text-white">{t.average.toLocaleString()}</b></span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${t.direction === "up" ? "text-emerald-400 bg-emerald-500/10" : t.direction === "down" ? "text-red-400 bg-red-500/10" : "text-slate-400 bg-slate-500/10"}`}>
+                                  {t.direction === "up" ? "+" : t.direction === "down" ? "" : ""}{t.change > 0 ? "+" : ""}{t.change.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Charts */}
+            {currentSections.map((section) => {
+              const secCharts = section.charts.filter(i => i < allCharts.length).map(i => allCharts[i]);
+              if (secCharts.length === 0) return null;
+              const SectionIcon = section.title === "Data Distributions" ? BarChart3 :
+                section.title === "Outlier Analysis" ? Activity :
+                section.title === "Categorical Analysis" ? PieChart :
+                section.title === "Correlation Matrix" ? Grid3X3 :
+                section.title === "Time Trends" ? TrendingUp :
+                section.title === "Relationships" ? ScatterChart :
+                section.title === "ML Dashboard" ? Zap :
+                section.title === "Predictions" ? Target :
+                section.title === "Data Quality" ? Shield : Layers;
+              return (
+                <div key={section.title} id={`section-${section.title.replace(/\s+/g, "-")}`} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-lg bg-[#27272a] flex items-center justify-center">
+                      <SectionIcon className="h-3 w-3 text-[#a1a1aa]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h2 className="text-xs font-semibold text-[#f8fafc]">{section.title}</h2>
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-[#27272a] text-[#a1a1aa] bg-[#18181b] font-medium">{secCharts.length}</Badge>
+                      </div>
+                      {section.description && <p className="text-[9px] text-[#a1a1aa] mt-px">{section.description}</p>}
+                    </div>
+                  </div>
+                  <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                    {secCharts.map((chart: any, ci: number) => {
+                      const ct = chartTypeBadge[chart.type] || { label: chart.type, color: "bg-[#27272a] text-[#a1a1aa] border-[#27272a]" };
+                      return (
+                        <Card key={ci} className="border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] shadow-lg hover:border-[#334155] transition-all duration-200 overflow-hidden">
+                          <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-[#1e293b]">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-semibold border uppercase tracking-wider ${ct.color}`}>{ct.label}</span>
+                              <h3 className="text-[11px] font-semibold text-white truncate">{chart.title}</h3>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0 ml-2">
+                              {chart.x && <span className="text-[8px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">{chart.x}</span>}
+                              {chart.y && <span className="text-[8px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">{chart.y}</span>}
+                            </div>
+                          </div>
+                          <CardContent className="p-1">
+                            {chart.plotly ? (
+                              <Plot
+                                data={chart.plotly.data}
+                                layout={{
+                                  ...chart.plotly.layout,
+                                  height: 320,
+                                  margin: chart.plotly.layout?.margin || { t: 40, b: 55, l: 60, r: 18 },
+                                  paper_bgcolor: "rgba(0,0,0,0)",
+                                  plot_bgcolor: "rgba(0,0,0,0)",
+                                  font: { color: "#94a3b8", size: 10, family: "Inter, system-ui, sans-serif" },
+                                  xaxis: { ...chart.plotly.layout?.xaxis, gridcolor: "rgba(148,163,184,0.08)", zerolinecolor: "rgba(148,163,184,0.08)" },
+                                  yaxis: { ...chart.plotly.layout?.yaxis, gridcolor: "rgba(148,163,184,0.08)", zerolinecolor: "rgba(148,163,184,0.08)" },
+                                }}
+                                config={{ responsive: true, displayModeBar: false, scrollZoom: false }}
+                                className="w-full" useResizeHandler
+                              />
+                            ) : (
+                              <div className="h-[320px] flex items-center justify-center bg-[#0f172a] rounded-lg border border-[#1e293b]">
+                                <div className="text-center"><BarChart3 className="h-8 w-8 text-slate-700 mx-auto mb-2" /><p className="text-xs text-slate-500 font-medium">{chart.type}: {chart.title}</p></div>
+                              </div>
+                            )}
+                          </CardContent>
+                          {chart.description && (
+                            <div className="px-3 pb-2 pt-0.5"><p className="text-[9px] text-[#a1a1aa] leading-relaxed">{chart.description}</p></div>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
             {/* Main content + Sidebar */}
             <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_340px]">
 
-              {/* Left: Charts */}
+              {/* Left: Sections */}
               <div className="space-y-4">
-                {/* AI Insights Highlight */}
-                {config.ai_insights && config.ai_insights.length > 0 && (
-                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="h-4 w-4 text-[#f59e0b]" />
-                      <h2 className="text-sm font-semibold text-[#f8fafc]">AI Insights</h2>
-                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-[#f59e0b]/20 text-[#f59e0b] bg-[#f59e0b]/10 font-medium">{config.ai_insights.length}</Badge>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {config.ai_insights.map((insight, i) => {
-                        const style = insightTypeColors[insight.type] || insightTypeColors.info;
-                        const Icon = style.icon;
-                        return (
-                          <div key={i} className={`flex items-start gap-2.5 p-3 rounded-lg border ${style.border} ${style.bg}`}>
-                            <div className={`shrink-0 mt-0.5 ${style.text}`}><Icon className="h-3.5 w-3.5" /></div>
-                            <p className={`text-[11px] leading-relaxed ${style.text}`}>{insight.message}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Detective Issues */}
-                {config.detective_issues && config.detective_issues.length > 0 && (
-                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
-                      <AlertTriangle className="h-4 w-4 text-red-400" />
-                      <h2 className="text-sm font-semibold text-[#f8fafc]">Data Detective</h2>
-                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-red-500/20 text-red-400 bg-red-500/10 font-medium">{config.detective_issues.length} issues</Badge>
-                    </div>
-                    <div className="divide-y divide-[#27272a]">
-                      {config.detective_issues.map((issue, i) => {
-                        const sev = severityColors[issue.severity] || severityColors.info;
-                        return (
-                          <div key={i} className="flex items-start justify-between px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border ${sev.bg} ${sev.text} ${sev.border}`}>
-                                  <span className="h-1.5 w-1.5 rounded-full bg-current" />{issue.severity}
-                                </span>
-                                <span className="text-[11px] font-semibold text-[#f8fafc]">{issue.column}</span>
-                                <span className="text-[9px] text-[#a1a1aa] bg-[#27272a] px-1.5 py-0.5 rounded font-mono">{issue.type}</span>
-                              </div>
-                              <p className="text-[10px] text-[#a1a1aa] mt-0.5">{issue.count} of {issue.total} values ({issue.pct}%)</p>
-                              <p className="text-[10px] text-[#a1a1aa] mt-0.5 italic">{issue.suggested_fix}</p>
-                            </div>
-                            <span className="shrink-0 ml-3 inline-flex items-center gap-1 text-[9px] font-medium text-[#a1a1aa] bg-[#27272a] px-1.5 py-0.5 rounded">
-                              <Activity className="h-2.5 w-2.5" /> {issue.confidence}%
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {/* Recommendations */}
                 {config.recommendations && config.recommendations.length > 0 && (
                   <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
@@ -421,40 +561,6 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
                   </div>
                 )}
 
-                {config.risks && config.risks.length > 0 && selectedSection === null && (
-                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
-                      <ShieldAlert className="h-4 w-4 text-red-400" />
-                      <h2 className="text-sm font-semibold text-[#f8fafc]">Risk Assessment</h2>
-                    </div>
-                    <div className="divide-y divide-[#27272a]">
-                      {config.risks.map((risk, i) => {
-                        const urgencyColors: Record<string, { bg: string; text: string }> = {
-                          immediate: { bg: "bg-red-500/10", text: "text-red-400" },
-                          high: { bg: "bg-orange-500/10", text: "text-orange-400" },
-                          medium: { bg: "bg-amber-500/10", text: "text-amber-400" },
-                          low: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
-                        };
-                        const uc = urgencyColors[risk.urgency] || urgencyColors.medium;
-                        return (
-                          <div key={i} className="px-4 py-2.5 hover:bg-[#0f0f11] transition-colors">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 min-w-0">
-                                <span className="text-[11px] font-semibold text-[#f8fafc]">{risk.risk}</span>
-                                <p className="text-[10px] text-[#a1a1aa] mt-0.5">{risk.mitigation}</p>
-                              </div>
-                              <div className="shrink-0 flex items-center gap-1.5">
-                                <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${uc.bg} ${uc.text}`}>{risk.urgency}</span>
-                                <span className="text-[9px] font-mono font-semibold text-[#a1a1aa] bg-[#27272a] px-1.5 py-0.5 rounded">{risk.score}/9</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {config.decisions && config.decisions.length > 0 && selectedSection === null && (
                   <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
                     <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
@@ -477,34 +583,6 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
                               <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${confColors[d.confidence] || confColors.medium}`}>{d.confidence} confidence</span>
                             </div>
                             <p className="text-[10px] text-[#a1a1aa] mt-1 leading-relaxed">{d.rationale}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {config.trends && config.trends.length > 0 && selectedSection === null && (
-                  <div className="rounded-xl border border-[#27272a] bg-[#18181b] overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#27272a]">
-                      <TrendIcon className="h-4 w-4 text-cyan-400" />
-                      <h2 className="text-sm font-semibold text-[#f8fafc]">Trend Analysis</h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
-                      {config.trends.map((t, i) => {
-                        const dirColor = t.direction === "up" ? "text-emerald-400" : t.direction === "down" ? "text-red-400" : "text-[#a1a1aa]";
-                        return (
-                          <div key={i} className="rounded-lg border border-[#27272a] bg-[#0f0f11] p-2.5">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-[11px] font-semibold text-[#f8fafc]">{t.metric}</span>
-                              <span className={`text-[9px] font-medium ${dirColor}`}>
-                                {t.direction === "up" ? "↗" : t.direction === "down" ? "↘" : "→"} {t.change_pct > 0 ? "+" : ""}{t.change_pct.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[9px] text-[#a1a1aa]">
-                              <span>Current: <b className="text-[#f8fafc]">{t.current}</b></span>
-                              <span>Avg: <b className="text-[#f8fafc]">{t.average}</b></span>
-                            </div>
                           </div>
                         );
                       })}
@@ -628,86 +706,97 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
                   </div>
                 )}
 
-                {config.insights && config.insights.length > 0 && (
-                  <div className="rounded-xl border border-[#f59e0b]/20 bg-[#f59e0b]/5 p-3">
-                    <div className="flex items-start gap-2">
-                      <div className="h-6 w-6 rounded-lg bg-[#f59e0b]/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <Lightbulb className="h-3 w-3 text-[#f59e0b]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-semibold text-[#f59e0b] mb-1">Key Insights <span className="font-normal text-[#f59e0b]/60">({config.insights.length})</span></p>
-                        <div className="space-y-0.5">{config.insights.map((ins, i) => (<p key={i} className="text-[10px] text-[#f59e0b]/80 leading-relaxed flex items-start gap-1"><span className="font-bold text-[#f59e0b]/50 mt-px shrink-0">◆</span><span>{ins}</span></p>))}</div>
-                      </div>
+                {/* AI Insights */}
+                {config.ai_insights && config.ai_insights.length > 0 && (
+                  <div className="rounded-xl border border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="h-4 w-4 text-amber-400" />
+                      <h2 className="text-sm font-semibold text-white">AI Insights</h2>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-amber-500/20 text-amber-400 bg-amber-500/10 font-medium">{config.ai_insights.length}</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {config.ai_insights.map((insight, i) => {
+                        const style = insightTypeColors[insight.type] || insightTypeColors.info;
+                        const Icon = style.icon;
+                        return (
+                          <div key={i} className={`flex items-start gap-2.5 p-3 rounded-lg border ${style.border} ${style.bg}`}>
+                            <div className={`shrink-0 mt-0.5 ${style.text}`}><Icon className="h-3.5 w-3.5" /></div>
+                            <p className={`text-[11px] leading-relaxed ${style.text}`}>{insight.message}</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Charts */}
-                {currentSections.map((section) => {
-                  const secCharts = section.charts.filter(i => i < allCharts.length).map(i => allCharts[i]);
-                  if (secCharts.length === 0) return null;
-                  const SectionIcon = section.title === "Data Distributions" ? BarChart3 :
-                    section.title === "Outlier Analysis" ? Activity :
-                    section.title === "Categorical Analysis" ? PieChart :
-                    section.title === "Correlation Matrix" ? Grid3X3 :
-                    section.title === "Time Trends" ? TrendingUp :
-                    section.title === "Relationships" ? ScatterChart :
-                    section.title === "ML Dashboard" ? Zap :
-                    section.title === "Predictions" ? Target :
-                    section.title === "Data Quality" ? Shield : Layers;
-                  return (
-                    <div key={section.title} id={`section-${section.title.replace(/\s+/g, "-")}`} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-lg bg-[#27272a] flex items-center justify-center">
-                          <SectionIcon className="h-3 w-3 text-[#a1a1aa]" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h2 className="text-xs font-semibold text-[#f8fafc]">{section.title}</h2>
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-[#27272a] text-[#a1a1aa] bg-[#18181b] font-medium">{secCharts.length}</Badge>
-                          </div>
-                          {section.description && <p className="text-[9px] text-[#a1a1aa] mt-px">{section.description}</p>}
-                        </div>
-                      </div>
-                      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
-                        {secCharts.map((chart: any, ci: number) => {
-                          const ct = chartTypeBadge[chart.type] || { label: chart.type, color: "bg-[#27272a] text-[#a1a1aa] border-[#27272a]" };
-                          return (
-                            <Card key={ci} className="border-[#27272a] bg-[#18181b] shadow-none hover:border-[#3f3f46] transition-all duration-200 overflow-hidden">
-                              <div className="flex items-center justify-between px-3 pt-2 pb-1 border-b border-[#27272a]">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className={`inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium border uppercase tracking-wider ${ct.color}`}>{ct.label}</span>
-                                  <h3 className="text-[11px] font-semibold text-[#f8fafc] truncate">{chart.title}</h3>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0 ml-1.5">
-                                  {chart.x && <span className="text-[8px] text-[#a1a1aa] bg-[#27272a] px-1 py-0.5 rounded border border-[#27272a] font-mono">{chart.x}</span>}
-                                  {chart.y && <span className="text-[8px] text-[#a1a1aa] bg-[#27272a] px-1 py-0.5 rounded border border-[#27272a] font-mono">{chart.y}</span>}
-                                </div>
-                              </div>
-                              <CardContent className="p-1">
-                                {chart.plotly ? (
-                                  <Plot
-                                    data={chart.plotly.data}
-                                    layout={{ ...chart.plotly.layout, height: 320, margin: chart.plotly.layout?.margin || { t: 40, b: 55, l: 60, r: 18 } }}
-                                    config={{ responsive: true, displayModeBar: false, scrollZoom: false }}
-                                    className="w-full" useResizeHandler
-                                  />
-                                ) : (
-                                  <div className="h-[320px] flex items-center justify-center bg-[#0f0f11] rounded-lg border border-[#27272a]">
-                                    <div className="text-center"><BarChart3 className="h-8 w-8 text-[#27272a] mx-auto mb-2" /><p className="text-xs text-[#a1a1aa] font-medium">{chart.type}: {chart.title}</p></div>
-                                  </div>
-                                )}
-                              </CardContent>
-                              {chart.description && (
-                                <div className="px-3 pb-2 pt-0.5"><p className="text-[9px] text-[#a1a1aa] leading-relaxed">{chart.description}</p></div>
-                              )}
-                            </Card>
-                          );
-                        })}
-                      </div>
+                {/* Data Detective */}
+                {config.detective_issues && config.detective_issues.length > 0 && (
+                  <div className="rounded-xl border border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#1e293b]">
+                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                      <h2 className="text-sm font-semibold text-white">Data Detective</h2>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-3.5 border-red-500/20 text-red-400 bg-red-500/10 font-medium">{config.detective_issues.length} issues</Badge>
                     </div>
-                  );
-                })}
+                    <div className="divide-y divide-[#1e293b]">
+                      {config.detective_issues.map((issue, i) => {
+                        const sev = severityColors[issue.severity] || severityColors.info;
+                        return (
+                          <div key={i} className="flex items-start justify-between px-4 py-2.5 hover:bg-[#0f172a] transition-colors">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border ${sev.bg} ${sev.text} ${sev.border}`}>
+                                  <span className="h-1.5 w-1.5 rounded-full bg-current" />{issue.severity}
+                                </span>
+                                <span className="text-[11px] font-semibold text-white">{issue.column}</span>
+                                <span className="text-[9px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded font-mono">{issue.type}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{issue.count} of {issue.total} values ({issue.pct}%)</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5 italic">{issue.suggested_fix}</p>
+                            </div>
+                            <span className="shrink-0 ml-3 inline-flex items-center gap-1 text-[9px] font-medium text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                              <Activity className="h-2.5 w-2.5" /> {issue.confidence}%
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Risk Assessment */}
+                {config.risks && config.risks.length > 0 && selectedSection === null && (
+                  <div className="rounded-xl border border-[#1e293b] bg-gradient-to-br from-[#0f172a] to-[#1e293b] overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-[#1e293b]">
+                      <ShieldAlert className="h-4 w-4 text-red-400" />
+                      <h2 className="text-sm font-semibold text-white">Risk Assessment</h2>
+                    </div>
+                    <div className="divide-y divide-[#1e293b]">
+                      {config.risks.map((risk, i) => {
+                        const urgencyColors: Record<string, { bg: string; text: string }> = {
+                          immediate: { bg: "bg-red-500/10", text: "text-red-400" },
+                          high: { bg: "bg-orange-500/10", text: "text-orange-400" },
+                          medium: { bg: "bg-amber-500/10", text: "text-amber-400" },
+                          low: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
+                        };
+                        const uc = urgencyColors[risk.urgency] || urgencyColors.medium;
+                        return (
+                          <div key={i} className="px-4 py-2.5 hover:bg-[#0f172a] transition-colors">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[11px] font-semibold text-white">{risk.risk}</span>
+                                <p className="text-[10px] text-slate-400 mt-0.5">{risk.mitigation}</p>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${uc.bg} ${uc.text}`}>{risk.urgency}</span>
+                                <span className="text-[9px] font-mono font-semibold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">{risk.score}/9</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Data Quality */}
                 {config.data_quality && (

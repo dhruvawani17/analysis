@@ -1,6 +1,7 @@
 import { auth } from "./firebase";
 
 const API_PREFIX = "/api";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { ...options?.headers as Record<string, string> };
@@ -32,14 +33,23 @@ export const api = {
     upload: (file: File) => {
       const form = new FormData();
       form.append("file", file);
-      return request<{ id: number; name: string; status: string }>("/datasets/upload", {
-        method: "POST",
-        body: form,
+      const headers: Record<string, string> = {};
+      const user = auth.currentUser;
+      if (user?.uid) headers["X-Firebase-UID"] = user.uid;
+      // Bypass Next.js proxy for large uploads (avoids 10MB limit)
+      const url = BACKEND_URL ? `${BACKEND_URL}/api/datasets/upload` : `${API_PREFIX}/datasets/upload`;
+      return fetch(url, { method: "POST", body: form, headers }).then(async (res) => {
+        if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+        return res.json();
       });
     },
     clean: (id: number) =>
       request<{ dataset_id: number; cleaning: Record<string, unknown>; rows: number; columns: number }>(`/datasets/clean/${id}`, {
         method: "POST",
+      }),
+    delete: (id: number) =>
+      request<{ status: string; dataset_id: number }>(`/datasets/${id}`, {
+        method: "DELETE",
       }),
     downloadUrl: (id: number, format: "csv" | "json" = "csv") =>
       `${API_PREFIX}/datasets/${id}/download?format=${format}`,

@@ -166,7 +166,7 @@ def _generate_insights(df, numeric_cols, categorical_cols, id_cols) -> list[dict
         if col in id_cols:
             continue
         for num_col in numeric_cols:
-            means = df.groupby(col)[num_col].mean()
+            means = df.groupby(col)[num_col].mean().dropna()
             if len(means) >= 2:
                 top_cat = means.idxmax()
                 bot_cat = means.idxmin()

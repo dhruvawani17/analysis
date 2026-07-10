@@ -18,7 +18,10 @@ router = APIRouter()
 async def run_full_analysis(
     dataset: Dataset = Depends(get_dataset_or_404),
 ):
-    df = load_dataframe(dataset.file_path)
+    try:
+        df = load_dataframe(dataset.file_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not load dataset file: {e}")
 
     df_clean, cleaning_report = clean_dataset(df)
     eda_result = run_eda(df_clean)
@@ -49,11 +52,17 @@ async def analyze_dataset(
     dataset: Dataset = Depends(get_dataset_or_404),
     db: AsyncSession = Depends(get_db),
 ):
-    df = load_dataframe(dataset.file_path)
+    try:
+        df = load_dataframe(dataset.file_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not load dataset file: {e}")
 
     if dataset.cleaned_file_path:
-        df_clean = load_dataframe(dataset.cleaned_file_path)
-        cleaning_report = dataset.data_quality_report if isinstance(dataset.data_quality_report, dict) else (json.loads(dataset.data_quality_report) if dataset.data_quality_report else {})
+        try:
+            df_clean = load_dataframe(dataset.cleaned_file_path)
+            cleaning_report = dataset.data_quality_report if isinstance(dataset.data_quality_report, dict) else (json.loads(dataset.data_quality_report) if dataset.data_quality_report else {})
+        except Exception:
+            df_clean, cleaning_report = clean_dataset(df)
     else:
         df_clean, cleaning_report = clean_dataset(df)
 
@@ -61,12 +70,16 @@ async def analyze_dataset(
 
     # Save cleaned parquet to S3
     uid = str(dataset.user_id) if dataset.user_id else "default"
-    cleaned_path = save_dataframe(
-        df_clean,
-        f"cleaned_{dataset.id}_{uuid.uuid4().hex[:8]}",
-        user_id=uid,
-        folder="cleaned",
-    )
+    try:
+        cleaned_path = save_dataframe(
+            df_clean,
+            f"cleaned_{dataset.id}_{uuid.uuid4().hex[:8]}",
+            user_id=uid,
+            folder="cleaned",
+        )
+        dataset.cleaned_file_path = cleaned_path
+    except Exception:
+        cleaned_path = dataset.cleaned_file_path
 
     try:
         ai_summary = await generate_ai_summary(eda_result)
@@ -76,7 +89,6 @@ async def analyze_dataset(
     dataset.data_quality_report = cleaning_report
     dataset.eda_summary = eda_result
     dataset.ai_summary = ai_summary
-    dataset.cleaned_file_path = cleaned_path
     await db.commit()
 
     return {

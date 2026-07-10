@@ -62,3 +62,13 @@ def load_dataframe(stored_path: str) -> pd.DataFrame:
 def get_signed_url(storage_path: str) -> str:
     """Generate a signed URL for a file in S3/B2."""
     return storage_service.generate_signed_url(storage_path)
+
+
+def delete_file(storage_path: str) -> bool:
+    """Delete a single file from S3/B2. Returns True on success."""
+    return _run_async(storage_service.delete_file(storage_path))
+
+
+def delete_prefix(prefix: str) -> int:
+    """Delete all files under a prefix in S3/B2. Returns count deleted."""
+    return _run_async(storage_service.delete_prefix(prefix))
