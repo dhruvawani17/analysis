@@ -287,7 +287,7 @@ export default function DatasetPage({
             {cleanResult && (
               <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-2 text-base text-foreground">
                     <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                     Data Cleaned Successfully
                   </CardTitle>
@@ -341,7 +341,7 @@ export default function DatasetPage({
             {/* Schema */}
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex items-center gap-2 text-base text-foreground">
                   <BarChart3 className="h-4 w-4 text-indigo-500" />
                   Dataset Schema
                 </CardTitle>
@@ -351,14 +351,14 @@ export default function DatasetPage({
                   <Table>
                     <TableHeader>
                       <TableRow className="border-border">
-                        <TableHead className="text-indigo-700">Column</TableHead>
-                        <TableHead className="text-indigo-700">Type</TableHead>
+                        <TableHead className="text-indigo-700 dark:text-indigo-300">Column</TableHead>
+                        <TableHead className="text-indigo-700 dark:text-indigo-300">Type</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {dataset.column_names.map((col) => (
                         <TableRow key={col} className="border-indigo-50 hover:bg-accent/50">
-                          <TableCell className="font-mono text-sm font-medium">{col}</TableCell>
+                          <TableCell className="font-mono text-sm font-medium text-foreground">{col}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-xs border-indigo-200 dark:border-slate-700 text-primary">
                               {dataset.dtypes[col] ?? "unknown"}
@@ -376,9 +376,9 @@ export default function DatasetPage({
             {analysisResult && (
               <>
                 {analysisResult.ai_summary && analysisResult.ai_summary !== "AI summary generation failed (check LLM provider configuration)." && (
-                  <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 dark:border-slate-700">
+                  <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 border-indigo-200 dark:border-indigo-800">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
+                      <CardTitle className="flex items-center gap-2 text-base text-foreground">
                         <Sparkles className="h-5 w-5 text-indigo-500" />
                         AI Summary
                       </CardTitle>
@@ -392,7 +392,7 @@ export default function DatasetPage({
                 {eda?.insights && eda.insights.length > 0 && (
                   <Card className="bg-card border-border">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
+                      <CardTitle className="flex items-center gap-2 text-base text-foreground">
                         <Sparkles className="h-5 w-5 text-amber-500" />
                         Key Insights
                       </CardTitle>
@@ -400,7 +400,7 @@ export default function DatasetPage({
                     <CardContent>
                       <div className="space-y-2">
                         {eda.insights.map((insight: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800">
                             <span className="text-amber-500 mt-0.5">•</span>
                             <span className="text-sm text-gray-700 dark:text-slate-300">{insight.message}</span>
                           </div>
@@ -414,7 +414,7 @@ export default function DatasetPage({
                   {charts?.missing && (
                     <Card className="bg-card border-border">
                       <CardHeader>
-                        <CardTitle className="text-base">Missing Values</CardTitle>
+                        <CardTitle className="text-base text-foreground">Missing Values</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <Plot
@@ -430,7 +430,7 @@ export default function DatasetPage({
                   {charts?.correlation && eda?.numeric_columns && eda.numeric_columns.length > 1 && (
                     <Card className="bg-card border-border">
                       <CardHeader>
-                        <CardTitle className="text-base">Correlation Matrix</CardTitle>
+                        <CardTitle className="text-base text-foreground">Correlation Matrix</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <Plot
@@ -447,7 +447,7 @@ export default function DatasetPage({
                 {eda?.stats && Object.keys(eda.stats).length > 0 && (
                   <Card className="bg-card border-border">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
+                      <CardTitle className="flex items-center gap-2 text-base text-foreground">
                         <BarChart3 className="h-5 w-5 text-indigo-500" />
                         Numeric Statistics
                       </CardTitle>
@@ -491,7 +491,7 @@ export default function DatasetPage({
                       ([col, chart]) => (
                         <Card key={col} className="bg-card border-border">
                           <CardHeader>
-                            <CardTitle className="text-base">{col}</CardTitle>
+                            <CardTitle className="text-base text-foreground">{col}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <Plot
