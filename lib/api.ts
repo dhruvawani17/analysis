@@ -3,6 +3,12 @@ import { auth } from "./firebase";
 const API_PREFIX = "/api";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 
+function getBackendUrl(): string {
+  // In production, NEXT_PUBLIC_BACKEND_URL must be set
+  // Locally, falls back to localhost:8000
+  return BACKEND_URL || "http://localhost:8000";
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { ...options?.headers as Record<string, string> };
   const isFormData = options?.body instanceof FormData;
@@ -37,8 +43,7 @@ export const api = {
       const user = auth.currentUser;
       if (user?.uid) headers["X-Firebase-UID"] = user.uid;
       // Bypass Next.js proxy for large uploads (avoids 10MB limit)
-      const url = BACKEND_URL ? `${BACKEND_URL}/api/datasets/upload` : `${API_PREFIX}/datasets/upload`;
-      return fetch(url, { method: "POST", body: form, headers }).then(async (res) => {
+      return fetch(`${getBackendUrl()}/api/datasets/upload`, { method: "POST", body: form, headers }).then(async (res) => {
         if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
         return res.json();
       });
@@ -131,5 +136,18 @@ export const api = {
       request<{ config: import("./types").DashboardConfig }>(`/dashboard/${datasetId}`),
     generate: (datasetId: number) =>
       request<{ config: import("./types").DashboardConfig }>(`/dashboard/generate/${datasetId}`, { method: "POST" }),
+  },
+
+  speech: {
+    transcribe: async (audioBlob: Blob) => {
+      const form = new FormData();
+      form.append("file", audioBlob, "audio.webm");
+      const headers: Record<string, string> = {};
+      const user = auth.currentUser;
+      if (user?.uid) headers["X-Firebase-UID"] = user.uid;
+      const res = await fetch(`${getBackendUrl()}/api/speech`, { method: "POST", body: form, headers });
+      if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+      return res.json();
+    },
   },
 };

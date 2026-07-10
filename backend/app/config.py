@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
     nvidia_api_key: str = ""
+    groq_api_key: str = ""
     llm_model: str = "gpt-4o"
 
     database_url: str = "postgresql+asyncpg://neondb_owner:npg_xxxxxxxxxxxx@ep-xxxxx.us-east-2.aws.neon.tech/neondb?ssl=require"
@@ -22,7 +23,7 @@ class Settings(BaseSettings):
 
     host: str = "0.0.0.0"
     port: int = 8000
-    cors_origins: str = "http://localhost:3000,https://*.vercel.app"
+    cors_origins: str = "http://localhost:3000,https://*.vercel.app,https://analysis-frontend-crpf.onrender.com,https://analysis-backend-v0ii.onrender.com"
 
     @property
     def cors_origin_list(self) -> list[str]:
